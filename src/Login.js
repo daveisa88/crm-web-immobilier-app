@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    sendPasswordResetEmail, // ✅ ajout
 } from "firebase/auth";
 import { collection, query, where, getDocs, setDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -18,27 +19,19 @@ function Login() {
         e.preventDefault();
         try {
             if (mode === "login") {
-                // ✅ Connexion utilisateur
                 const cred = await signInWithEmailAndPassword(auth, email, password);
                 const userEmail = cred.user.email?.toLowerCase();
 
-                // 🔍 Chercher l'utilisateur par email dans Firestore
                 const q = query(collection(db, "users"), where("email", "==", userEmail));
                 const snap = await getDocs(q);
 
                 if (!snap.empty) {
                     const data = snap.docs[0].data();
-                    console.log("🔥 Données Firestore :", data);
-
-                    // ✅ Exception ADMIN (stop ici ⛔)
                     if (data.role?.toLowerCase().trim() === "admin") {
-                        console.log("🎉 ADMIN détecté -> accès direct");
                         setMessage("✅ Connexion ADMIN réussie !");
                         navigate("/Feuille");
-                        return; // <<--- très important
+                        return;
                     }
-
-                    // 👉 Sinon contrôle abonnement
                     if (data.subscription?.status === "active" && data.subscription?.endDate) {
                         const end = new Date(data.subscription.endDate);
                         const now = new Date();
@@ -56,20 +49,17 @@ function Login() {
                         navigate("/abonnement");
                     }
                 } else {
-                    console.log("❌ Aucun document Firestore trouvé !");
                     setMessage("⚠️ Utilisateur sans données Firestore.");
                     navigate("/abonnement");
                 }
-
             } else {
-                // ✅ Création d’un compte
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
                 const userEmail = cred.user.email?.toLowerCase();
 
                 await setDoc(doc(db, "users", cred.user.uid), {
                     email: userEmail,
                     createdAt: new Date().toISOString(),
-                    role: "user", // par défaut
+                    role: "user",
                     subscription: {
                         status: "inactive",
                         endDate: null,
@@ -80,13 +70,23 @@ function Login() {
                 navigate("/abonnement");
             }
         } catch (err) {
-            console.error("❌ Erreur login:", err);
             setMessage(`❌ Erreur : ${err.message}`);
         }
     };
 
-
-
+    // ✅ Fonction reset password
+    const handleResetPassword = async () => {
+        if (!email) {
+            setMessage("⚠️ Entrez d’abord votre email pour réinitialiser.");
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setMessage("📩 Email de réinitialisation envoyé !");
+        } catch (err) {
+            setMessage(`❌ Erreur reset : ${err.message}`);
+        }
+    };
 
     return (
         <div
@@ -111,7 +111,6 @@ function Login() {
                     textAlign: "center",
                 }}
             >
-                {/* 🔙 Bouton Retour */}
                 <div style={{ marginBottom: "20px", textAlign: "left" }}>
                     <button
                         onClick={() => navigate("/")}
@@ -164,6 +163,24 @@ function Login() {
                             fontSize: "1rem",
                         }}
                     />
+
+                    {/* ✅ Mot de passe oublié */}
+                    {mode === "login" && (
+                        <button
+                            type="button"
+                            onClick={handleResetPassword}
+                            style={{
+                                background: "none",
+                                border: "none",
+                                color: "#4fa3f7",
+                                cursor: "pointer",
+                                fontSize: "0.9rem",
+                                textDecoration: "underline",
+                            }}
+                        >
+                            🔒 Mot de passe oublié ?
+                        </button>
+                    )}
 
                     <button
                         type="submit"
