@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analyse IA Immobilier</title>
+    <style>
+        body {
+            background: #243b55;
+            color: white;
+            font-family: Segoe UI, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            background: #e91e63;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #result {
+            background: white;
+            color: #111;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Analyse d'une annonce par l'IA</h1>
+
+    <label>📎 Lien ou texte de l'annonce :</label>
+    <textarea id="annonce" rows="2"></textarea>
+
+    <label>🛠️ Code HTML (optionnel) :</label>
+    <textarea id="htmlFallback" rows="6"></textarea>
+
+    <div style="margin:15px 0;">
+        <button id="analyser" style="background:#e91e63;color:white;">🤖 Lancer l’analyse IA</button>
+        <button id="clear" style="background:#1a2a4f;color:white;">🧹 Effacer</button>
+    </div>
+
+    <div id="result">🧠 Le rapport s'affichera ici...</div>
+
+    <script>
+        const API_KEY = window._env_.REACT_APP_OPENAI_API_KEY; // ⚡ injecté par Vercel/.env
+
+        document.getElementById("analyser").addEventListener("click", async () => {
+            const annonce = document.getElementById("annonce").value;
+            const htmlFallback = document.getElementById("htmlFallback").value;
+            let resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "⏳ Analyse en cours...";
+
+            try {
+                let texte = annonce;
+                if (htmlFallback) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlFallback, "text/html");
+                    doc.querySelectorAll("script,style,noscript").forEach(el => el.remove());
+                    texte = doc.body.innerText.replace(/\s+/g, " ").trim();
+                }
+
+                const prompt = `
+Tu es un expert immobilier. Donne-moi une fiche synthèse et un résumé fluide cohérent avec l'annonce suivante.
+Annonce brute :
+${texte}
+`;
+
+                const response = await fetch("https://api.openai.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": \`Bearer \${API_KEY}\`
+              },
+              body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.7
+              })
+            });
+
+            const data = await response.json();
+            if (!response.ok || data.error) {
+              resultDiv.innerHTML = "❌ Erreur API : " + (data?.error?.message || "inconnue");
+              return;
+            }
+
+            const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
+            resultDiv.innerHTML = `
+                        < h2 >📊 Synthèse de l'annonce</h2>
+                        <div style = "background:#2b3d63;color:white;padding:20px;border-radius:10px;white-space:pre-wrap;">
+                ${ texteIA }
+              </div >
+                    `;
+          } catch (err) {
+            resultDiv.innerHTML = "❌ Erreur : " + err.message;
+          }
+        });
+
+        document.getElementById("clear").addEventListener("click", () => {
+          document.getElementById("annonce").value = "";
+          document.getElementById("htmlFallback").value = "";
+          document.getElementById("result").innerHTML = "🧠 Le rapport s'affichera ici...";
+        });
+    </script>
+</body>
+</html>

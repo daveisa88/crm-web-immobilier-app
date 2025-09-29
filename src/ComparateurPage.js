@@ -94,18 +94,20 @@ Indique si le bien est surévalué, sous-évalué ou cohérent avec le marché r
 Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phrase concise, et calcule une note moyenne globale.`;
 
 
-            const response = await fetch("https://api.openai.com/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.6
-                })
+            import OpenAI from "openai";
+
+            const client = new OpenAI({
+                apiKey: process.env.REACT_APP_OPENAI_API_KEY, // 🔑 lu depuis ton .env
             });
+
+            const completion = await client.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.6,
+            });
+
+            const texteIA = completion.choices[0]?.message?.content || "⚠️ Aucun résultat.";
+
 
             const data = await response.json();
             if (!response.ok || data.error) {

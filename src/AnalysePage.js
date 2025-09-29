@@ -61,27 +61,26 @@ Annonce brute :
 ${texte}
 `;
 
-            // === Appel API
-            const response = await fetch("https://api.openai.com/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-                },
-                body: JSON.stringify({
+            // === Appel API avec SDK OpenAI
+            import OpenAI from "openai";
+
+            const client = new OpenAI({
+                apiKey: process.env.REACT_APP_OPENAI_API_KEY, // 🔑 clé stockée dans .env
+            });
+
+            try {
+                const completion = await client.chat.completions.create({
                     model: "gpt-3.5-turbo",
                     messages: [{ role: "user", content: prompt }],
                     temperature: 0.7,
-                }),
-            });
+                });
 
-            const data = await response.json();
-
-            if (!response.ok || data.error) {
-                const msg = data?.error?.message || JSON.stringify(data);
-                setResult("❌ API error: " + msg);
-                return;
+                const texteIA = completion.choices[0]?.message?.content || "⚠️ Aucun résultat.";
+                setResult(texteIA);
+            } catch (error) {
+                setResult("❌ API error: " + error.message);
             }
+
 
             // 5) Résultat
             const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
