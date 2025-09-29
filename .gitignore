@@ -1,0 +1,14 @@
+﻿node_modules/
+build/
+dist/
+coverage/
+.env
+.env.*
+.env.local
+.vs/
+.vscode/
+.vercel/
+firebase-node/
+npm-debug.log*
+yarn-*.log*
+.vercel

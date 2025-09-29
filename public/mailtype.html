@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mail type - Agent Immobilier</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0d1b2a;
+      color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      background: #14243a;
+      padding: 15px 20px;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      margin-bottom: 25px;
+      border-radius: 8px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+    section {
+      background: #1b263b;
+      padding: 20px;
+      margin-bottom: 25px;
+      border-radius: 10px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 600;
+      color: #ffb347;
+    }
+    select, input[type="date"], input[type="text"], textarea {
+      width: 100%;
+      max-width: 600px;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+      background: #0d1b2a;
+      color: #f4f4f4;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    .button {
+      margin-top: 12px;
+      background: linear-gradient(135deg, #ff7a00, #e65c00);
+      color: #fff;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+    }
+    .button:hover { background: #ff9633; transform: translateY(-2px); }
+    .row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .btn-retour {
+      display: inline-block;
+      margin-bottom: 20px;
+      background: #16375e;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+    .btn-retour:hover {
+      background: #1d4e85;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📧 Générateur de mails - Agent Immobilier</h1>
+  </header>
+
+  <!-- Bouton retour -->
+  <a href="/#Feuille" class="btn-retour">⬅ Retour à la feuille</a>
+
+  <!-- Formulaire -->
+  <section>
+    <label>👤 Nom du client :</label>
+    <input type="text" id="client" />
+
+    <label>🏠 Adresse du bien :</label>
+    <input type="text" id="adresse" />
+
+    <div class="row">
+      <div>
+        <label>Étape :</label>
+        <select id="typeMail">
+          <option>R0 - Contact</option>
+          <option>R1 - Visite découverte</option>
+          <option>R2 - Estimation & Mandat</option>
+          <option>Commercialisation</option>
+          <option>Qualification acquéreur</option>
+          <option>Visites organisées</option>
+          <option>Offre reçue</option>
+          <option>Compromis signé</option>
+          <option>Acte authentique</option>
+        </select>
+      </div>
+      <div>
+        <label>Date :</label>
+        <input type="date" id="date" />
+      </div>
+      <div>
+        <label>Heure :</label>
+        <select id="heure">
+          <option>10h</option><option>12h</option><option>14h</option>
+          <option>15h30</option><option>16h</option><option>18h</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="button" onclick="genererMail()">📧 Générer le mail</button>
+  </section>
+
+  <!-- Résultat -->
+  <section>
+    <h2>Objet :</h2>
+    <textarea id="objet" readonly></textarea>
+    <h2>Corps :</h2>
+    <textarea id="corps" readonly></textarea>
+
+    <button class="button" onclick="ouvrirOutlook()">📤 Ouvrir dans Outlook</button>
+    <button class="button" onclick="exporterPDF()">📄 Exporter PDF</button>
+  </section>
+
+  <script>
+   const modeles = {
+  "R0 - Contact": {
+    objet: "Prise de contact avec {CLIENT} – {DATE}",
+    corps: `Bonjour {CLIENT},
+
+Suite à votre demande concernant le bien situé au {ADRESSE}, je me permets de vous contacter afin d’échanger sur votre projet immobilier. 
+
+Je reste à votre disposition pour convenir d’un premier rendez-vous téléphonique ou physique selon vos disponibilités.
+
+Bien cordialement,
+[Votre Nom / Agence]`
+  },
+  "R1 - Visite découverte": {
+    objet: "Confirmation de la visite – {ADRESSE} le {DATE}",
+    corps: `Bonjour {CLIENT},
+
+Comme convenu, la visite du bien situé au {ADRESSE} est programmée le {DATE} à {HEURE}. 
+
+Merci de bien vouloir me confirmer votre présence ou de me prévenir en cas d’empêchement.
+
+Dans l’attente de notre rencontre, je reste à votre disposition.
+
+Bien à vous,
+[Votre Nom / Agence]`
+  },
+  "R2 - Estimation & Mandat": {
+    objet: "Estimation du bien et proposition de mandat – {ADRESSE}",
+    corps: `Bonjour {CLIENT},
+
+Veuillez trouver ci-joint l’estimation réalisée pour le bien situé au {ADRESSE}. 
+
+Nous pourrons échanger ensemble sur cette évaluation et, si vous le souhaitez, formaliser un mandat de vente afin de mettre votre bien sur le marché dans les meilleures conditions.
+
+Je reste à votre disposition pour toute question.
+
+Bien cordialement,
+[Votre Nom / Agence]`
+  },
+  "Commercialisation": {
+    objet: "Mise en commercialisation – {ADRESSE}",
+    corps: `Bonjour {CLIENT},
+
+Votre bien situé au {ADRESSE} est désormais en ligne et visible sur nos plateformes partenaires. 
+
+Nous ne manquerons pas de vous informer régulièrement des retours des acquéreurs potentiels ainsi que des visites planifiées.
+
+Merci pour votre confiance.
+
+Bien cordialement,
+[Votre Nom / Agence]`
+  },
+  "Qualification acquéreur": {
+    objet: "Qualification d’un acquéreur potentiel – {ADRESSE}",
+    corps: `Bonjour {CLIENT},
+
+Un acquéreur intéressé par votre bien situé au {ADRESSE} a été identifié. 
+
+Nous allons organiser un entretien afin de qualifier son projet et de vérifier sa capacité de financement avant toute proposition d’achat.
+
+Je ne manquerai pas de revenir vers vous avec davantage de détails.
+
+Bien à vous,
+[Votre Nom / Agence]`
+  },
+  "Visites organisées": {
+    objet: "Organisation des visites – {ADRESSE} le {DATE}",
+    corps: `Bonjour {CLIENT},
+
+Les visites du bien situé au {ADRESSE} sont prévues le {DATE} à partir de {HEURE}. 
+
+Nous mettrons tout en œuvre pour valoriser votre bien et recueillir des retours constructifs des acquéreurs potentiels.
+
+Je vous ferai un compte rendu détaillé à l’issue des visites.
+
+Bien cordialement,
+[Votre Nom / Agence]`
+  },
+  "Offre reçue": {
+    objet: "Réception d’une offre d’achat – {ADRESSE}",
+    corps: `Bonjour {CLIENT},
+
+Nous avons le plaisir de vous informer qu’une offre d’achat a été reçue pour votre bien situé au {ADRESSE}. 
+
+Nous reviendrons rapidement vers vous pour en discuter ensemble et analyser les conditions proposées.
+
+Bien à vous,
+[Votre Nom / Agence]`
+  },
+  "Compromis signé": {
+    objet: "Signature du compromis – {ADRESSE}",
+    corps: `Bonjour {CLIENT},
+
+Le compromis de vente concernant votre bien situé au {ADRESSE} a été signé le {DATE}. 
+
+Nous allons désormais préparer les prochaines étapes administratives en vue de l’acte authentique.
+
+Je reste disponible pour toute question.
+
+Bien cordialement,
+[Votre Nom / Agence]`
+  },
+  "Acte authentique": {
+    objet: "Signature de l’acte authentique – {ADRESSE}",
+    corps: `Bonjour {CLIENT},
+
+Nous vous confirmons que la signature de l’acte authentique pour le bien situé au {ADRESSE} est prévue le {DATE} à {HEURE}. 
+
+Toutes nos félicitations pour la concrétisation de cette vente. 
+
+Merci pour votre confiance tout au long de ce projet.
+
+Bien à vous,
+[Votre Nom / Agence]`
+  }
+};
+
+
+    function getFormattedDate(date) {
+      if (!date) return "JJ/MM/AAAA";
+      const d = new Date(date);
+      return isNaN(d) ? "JJ/MM/AAAA" : d.toLocaleDateString('fr-FR');
+    }
+    function genererMail() {
+      const type = document.getElementById("typeMail").value;
+      const client = document.getElementById("client").value;
+      const adresse = document.getElementById("adresse").value;
+      const date = document.getElementById("date").value;
+      const heure = document.getElementById("heure").value;
+      const dateStr = getFormattedDate(date);
+
+      let objetTpl = modeles[type]?.objet || "{TYPE} – {ADRESSE}";
+      let corpsTpl = modeles[type]?.corps || "Message auto";
+
+      const replacements = {
+        "{CLIENT}": client,
+        "{ADRESSE}": adresse,
+        "{DATE}": dateStr,
+        "{HEURE}": heure,
+        "{TYPE}": type
+      };
+
+      for (const token in replacements) {
+        objetTpl = objetTpl.replaceAll(token, replacements[token]);
+        corpsTpl = corpsTpl.replaceAll(token, replacements[token]);
+      }
+
+      document.getElementById("objet").value = objetTpl.trim();
+      document.getElementById("corps").value = corpsTpl.trim();
+    }
+
+    function ouvrirOutlook() {
+      const subject = document.getElementById("objet").value.trim();
+      let bodyText = document.getElementById("corps").value.trim();
+      bodyText = bodyText.replace(/\n/g, '\r\n');
+      const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      window.location.href = mailto;
+    }
+
+    function exporterPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const objet = document.getElementById("objet").value.trim();
+      const corps = document.getElementById("corps").value.trim();
+      doc.setFont("helvetica","bold"); doc.text("Objet :", 10, 20);
+      doc.setFont("helvetica","normal"); doc.text(objet, 30, 20);
+      doc.setFont("helvetica","bold"); doc.text("Corps :", 10, 40);
+      doc.setFont("helvetica","normal");
+      const lignes = doc.splitTextToSize(corps, 180);
+      doc.text(lignes, 10, 50);
+      doc.save("mail_immobilier.pdf");
+    }
+
+    function preRemplirDepuisFiche() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("client")) document.getElementById("client").value = params.get("client");
+      if (params.get("adresse")) document.getElementById("adresse").value = params.get("adresse");
+    }
+
+    window.onload = preRemplirDepuisFiche;
+  </script>
+</body>
+</html>

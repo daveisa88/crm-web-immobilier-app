@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Comparateur IA - PDF</title>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.1/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #00fff7;
+            margin-bottom: 30px;
+        }
+
+        input[type="file"] {
+            margin: 10px;
+            padding: 6px;
+            border-radius: 8px;
+            border: 1px solid #00fff7;
+            background: #111;
+            color: #00fff7;
+        }
+
+        button {
+            margin: 15px 10px;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00fff7;
+            transition: 0.3s ease;
+        }
+
+            button:hover {
+                transform: scale(1.05);
+            }
+
+        .btn-green {
+            background: #00ffcc;
+            color: #111;
+        }
+
+        .btn-blue {
+            background: #f1c40f;
+            color: #111;
+        }
+
+        .result {
+            margin-top: 30px;
+            background: #0d1a26;
+            color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            white-space: pre-wrap;
+            text-align: left;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid #00fff7;
+        }
+
+        .trophee {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+            .trophee img {
+                width: 80px;
+                filter: drop-shadow(0 0 6px gold);
+            }
+
+        .trophee-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fcd303;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Comparer 3 annonces immobilières PDF (OCR + IA)</h1>
+
+    <input type="file" id="pdf1" accept="application/pdf">
+    <input type="file" id="pdf2" accept="application/pdf">
+    <input type="file" id="pdf3" accept="application/pdf"><br><br>
+
+    <button onclick="analyserComparaisonIA()" class="btn-green">🧠 Lancer la comparaison</button>
+    <button onclick="telechargerComparaison()" class="btn-blue">📄 Télécharger le rapport</button>
+
+    <div id="result" class="result">📥 En attente de fichiers PDF…</div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+
+        async function extractTextWithOCR(file) {
+            const reader = new FileReader();
+            return new Promise((resolve, reject) => {
+                reader.onload = async function () {
+                    try {
+                        const pdfData = new Uint8Array(reader.result);
+                        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                        let allText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const viewport = page.getViewport({ scale: 2 });
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            await page.render({ canvasContext: context, viewport }).promise;
+                            const { data: { text } } = await Tesseract.recognize(canvas, 'fra');
+                            allText += text + "\n\n";
+                        }
+                        resolve(allText.trim());
+                    } catch (err) {
+                        reject(err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // 🔍 Analyse IA avec API OpenAI
+        const analyserComparaisonIA = async () => {
+            setResultat("⏳ Analyse en cours…");
+
+            const fichiers = ["pdf1", "pdf2", "pdf3"].map(
+                id => document.getElementById(id).files[0]
+            );
+
+            if (fichiers.some(f => !f)) {
+                setResultat("❌ Merci de sélectionner les 3 fichiers PDF.");
+                return;
+            }
+
+            try {
+                // Extraction du texte des PDF
+                const textes = await Promise.all(fichiers.map(extractTextWithOCR));
+
+                // Prompt envoyé à l'IA
+                const prompt = `Voici 3 annonces immobilières :
+
+Annonce 1 :
+${textes[0]}
+
+Annonce 2 :
+${textes[1]}
+
+Annonce 3 :
+${textes[2]}
+
+Compare les 3 biens selon : surface, nombre de pièces, confort du chauffage, exposition au soleil, terrain.
+Donne une note de 1 à 10 pour chaque critère par annonce.
+Analyse aussi le prix demandé pour chaque bien par rapport au prix moyen au m² de sa région (selon le rapport immobilier fourni).
+Indique si le bien est surévalué, sous-évalué ou cohérent avec le marché régional.
+Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phrase concise, et calcule une note moyenne globale.`;
+
+                // Appel API
+                const response = await fetch("/api/ai", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.6
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    const msg = data?.error?.message || JSON.stringify(data);
+                    setResultat("❌ API error: " + msg);
+                    return;
+                }
+
+                // Récupération de la sortie
+                const output = data.choices?.[0]?.message?.content || "Réponse vide.";
+
+                // Détection de l’annonce gagnante
+                const gagnant = output.match(/l['’]annonce\s+(\d)/i)?.[1] || "?";
+
+                // Badge gagnant
+                const badge = `
+            <div style="margin-top:10px;text-align:center;">
+                <span style="background:gold;color:#111;padding:8px 16px;border-radius:20px;font-weight:bold;">
+                    🥇 Annonce gagnante : ${gagnant}
+                </span>
+            </div>`;
+
+                // Résultat affiché
+                setResultat(`<pre style="white-space:pre-wrap;">${output}</pre>${badge}`);
+            } catch (error) {
+                console.error("Erreur analyse:", error);
+                setResultat("❌ Erreur pendant l'analyse.");
+            }
+        };
+
+        // 📄 Export PDF
+        const telechargerPDF = async () => {
+            const element = pdfRef.current;
+            if (!element) {
+                alert("Rien à exporter !");
+                return;
+            }
+
+            const canvas = await html2canvas(element, { scale: 2 });
+            const imgData = canvas.toDataURL("image/png");
+
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, "PNG", 10, 10, pdfWidth - 20, pdfHeight);
+            pdf.save("comparaison_annonces.pdf");
+        };
+
+
+
+    </script>
+</body>
+</html>

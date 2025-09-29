@@ -1,0 +1,88 @@
+{
+  "name": "immopilot_react",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "./",
+  "description": "Application ImmoPilot avec React, Firebase et Electron",
+  "author": "Dave Genin",
+  "main": "main.js",
+  "dependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "dotenv": "^16.5.0",
+    "electron-is-dev": "^3.0.1",
+    "firebase": "^11.10.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "pdfjs-dist": "^2.16.105",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.30.1",
+    "react-scripts": "5.0.1",
+    "tesseract.js": "^6.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^36.9.1",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^7.2.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "electron": "electron .",
+    "dev": "concurrently \"npm run react\" \"npm run electron-wait\"",
+    "react": "cross-env BROWSER=none PORT=3001 react-scripts start",
+    "electron-wait": "wait-on http://localhost:3001 && npx electron .",
+    "electron-build": "electron-builder",
+    "dist": "npm run build && npm run electron-build"
+  },
+  "build": {
+    "appId": "com.immopilot.app",
+    "productName": "ImmoPilot",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "files": [
+      "build/**/*",
+      "main.js",
+      "preload.js",
+      "public/manuel.html",
+      "public/analyse.html",
+      "public/comparateur.html",
+      "assets/**/*"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "resolutions": {
+    "html2pdf.js": "ignore"
+  }
+}
