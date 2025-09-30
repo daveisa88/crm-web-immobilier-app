@@ -20,7 +20,6 @@ function AccueilPage() {
         "✅ Une solution simple, rapide et sans prise de tête."
     ];
 
-
     const [currentMessage, setCurrentMessage] = useState(0);
 
     useEffect(() => {
@@ -46,55 +45,83 @@ function AccueilPage() {
     });
 
     return (
-        <div style={{
-            background: "linear-gradient(135deg, #1a2a4f, #243b55)",
-            minHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            color: "white",
-            textAlign: "center",
-            padding: "0"
-        }}>
-            {/* ✅ Bannière pub dynamique en full width */}
-            <div style={{
-                background: "#e91e63",
-                width: "100%",
-                padding: "15px 0",
+        <div
+            style={{
+                background: "linear-gradient(135deg, #1a2a4f, #243b55)",
+                minHeight: "100vh",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                color: "white",
                 textAlign: "center",
-                fontWeight: "bold",
-                fontSize: "20px",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
-                marginBottom: "40px",
-            }}>
+                padding: "0",
+            }}
+        >
+            {/* ✅ Bannière pub dynamique en full width */}
+            <div
+                style={{
+                    background: "#e91e63",
+                    width: "100%",
+                    padding: "15px 0",
+                    textAlign: "center",
+                    fontWeight: "bold",
+                    fontSize: "20px",
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+                    marginBottom: "40px",
+                }}
+            >
                 {messages[currentMessage]}
             </div>
 
             {/* Logo + titre */}
-            <h1 style={{ fontSize: "32px", marginBottom: "30px", maxWidth: "900px" }}>
+            <h1
+                style={{
+                    fontSize: "32px",
+                    marginBottom: "30px",
+                    maxWidth: "900px",
+                }}
+            >
                 🏡 Bienvenue sur notre CRM simple et fun, conçu pour vous libérer des tâches répétitives et rendre votre travail plus fluide.
             </h1>
 
             {/* ✅ Boutons navigation */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "15px" }}>
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "15px",
+                }}
+            >
+                {/* 🔹 Correction ici → route "/manuel" */}
                 <button
-                    onClick={() => navigate("/mode-emploi")}
-                    style={{
-                        backgroundColor: "#4fa3f7",
-                        color: "#fff",
-                        padding: "12px 22px",
-                        borderRadius: 8,
-                        fontWeight: "bold",
-                        border: "none",
-                        cursor: "pointer",
-                    }}
+                    onClick={() => navigate("/manuel")}
+                    style={buttonStyle("#4fa3f7")}
                 >
                     📘 Mode d'emploi
                 </button>
-                <button onClick={() => navigate("/login")} style={buttonStyle("#e91e63")}>🔑 Connexion</button>
-                <button onClick={() => navigate("/fiche-preview")} style={buttonStyle("#1a2a4f")}>📄 Fiche Client</button>
-                <button onClick={() => navigate("/abonnement")} style={buttonStyle("#ff9800")}>💳 Abonnement</button>
+
+                <button
+                    onClick={() => navigate("/login")}
+                    style={buttonStyle("#e91e63")}
+                >
+                    🔑 Connexion
+                </button>
+
+                <button
+                    onClick={() => navigate("/fiche-preview")}
+                    style={buttonStyle("#1a2a4f")}
+                >
+                    📄 Fiche Client
+                </button>
+
+                <button
+                    onClick={() => navigate("/abonnement")}
+                    style={buttonStyle("#ff9800")}
+                >
+                    💳 Abonnement
+                </button>
             </div>
         </div>
     );
