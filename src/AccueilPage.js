@@ -78,19 +78,22 @@ function AccueilPage() {
             {/* ✅ Boutons navigation */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "15px" }}>
                 <button
-                    onClick={() => navigate("/mode-emploi")} // ✅ maintenant ouvre bien ModeEmploi.js
+                    onClick={() => navigate("/mode-emploi")}
                     style={{
                         backgroundColor: "#4fa3f7",
                         color: "#fff",
-                        padding: "12px 22px",
-                        borderRadius: 8,
+                        padding: "8px 16px",   // ✅ plus petit que 12px 22px
+                        borderRadius: 6,
                         fontWeight: "bold",
                         border: "none",
                         cursor: "pointer",
+                        fontSize: "14px",      // ✅ texte plus petit
+                        width: "180px",        // ✅ largeur réduite
                     }}
                 >
                     📘 Mode d'emploi
                 </button>
+
                 <button onClick={() => navigate("/login")} style={buttonStyle("#e91e63")}>🔑 Connexion</button>
                 <button onClick={() => navigate("/fiche-preview")} style={buttonStyle("#1a2a4f")}>📄 Fiche Client</button>
                 <button onClick={() => navigate("/abonnement")} style={buttonStyle("#ff9800")}>💳 Abonnement</button>
