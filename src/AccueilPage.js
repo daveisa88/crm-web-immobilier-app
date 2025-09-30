@@ -88,7 +88,7 @@ function AccueilPage() {
                         border: "none",
                         cursor: "pointer",
                         fontSize: "14px",      // ✅ texte plus petit
-                        width: "180px",        // ✅ largeur réduite
+                        width: "200px",        // ✅ largeur réduite
                     }}
                 >
                     📘 Mode d'emploi
