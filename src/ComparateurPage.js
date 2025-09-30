@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { checkAndConsumeQuota } from "./quota"; // ⚡ quota

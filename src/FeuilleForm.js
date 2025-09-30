@@ -74,7 +74,7 @@ export default function FeuilleForm() {
     const openPage = (path) => {
         navigate(path);
     };
-
+    // eslint-disable-next-line no-unused-vars
     const openMailType = () => {
         const client = encodeURIComponent(formData.client || "");
         const adresse = encodeURIComponent(formData.adresse || "");
