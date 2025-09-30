@@ -61,28 +61,27 @@ Annonce brute :
 ${texte}
 `;
 
-            const response = await fetch("/api/openai", {
+            // === Appel API
+            const response = await fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt }), // ✅ et pas message
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7,
+                }),
             });
-
 
             const data = await response.json();
 
             if (!response.ok || data.error) {
-                setResult("❌ API error: " + (data.error || "Erreur inconnue"));
+                const msg = data?.error?.message || JSON.stringify(data);
+                setResult("❌ API error: " + msg);
                 return;
             }
-
-            // ✅ Uniformisé → data.reply
-            const texteIA = data.reply || "⚠️ Aucun résultat.";
-            setResult(`
-  <div style="...">
-    <h2 style="...">📊 Synthèse de l'annonce</h2>
-    <div style="...">
-      ${texteIA}
-
 
             // 5) Résultat
             const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
