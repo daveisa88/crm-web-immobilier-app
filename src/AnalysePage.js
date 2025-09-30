@@ -53,9 +53,20 @@ export default function AnalysePage() {
             }
 
             const prompt = `
-Tu es un expert immobilier. Donne-moi une fiche synthèse et un résumé fluide de l’annonce suivante.
-- La fiche doit être cohérente avec les infos trouvées (surface, prix, pièces…).
-- Le résumé doit être naturel et lisible pour un client.
+Tu es un expert immobilier. Analyse l’annonce ci-dessous et renvoie uniquement un objet JSON structuré avec les champs suivants :
+{
+  "type_bien": "",
+  "localisation": "",
+  "surface": "",
+  "pieces": "",
+  "etage": "",
+  "atouts": "",
+  "prix": "",
+  "prix_m2": "",
+  "resume": ""
+}
+
+⚠️ Donne uniquement du JSON valide, sans texte autour.
 
 Annonce brute :
 ${texte}
@@ -75,49 +86,52 @@ ${texte}
                 return;
             }
 
-            // 5) Résultat
-            const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
-            setResult(`
-            <div style="
-                max-width:850px;
-                margin:20px auto;
-                background:#2b3d63;
-                color:#fff;
-                padding:25px;
-                border-radius:12px;
-                box-shadow:0 6px 15px rgba(0,0,0,0.3);
-                font-family:Segoe UI, sans-serif;
-                line-height:1.7;
-                font-size:15px;
-            ">
-                <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
-                    📊 Synthèse de l'annonce
-                </h2>
+            try {
+                // ✅ On parse la réponse JSON de l'IA
+                const fiche = JSON.parse(data.result);
 
-    <p><strong>🏡 Type de bien :</strong> Appartement</p>
-    <p><strong>📍 Localisation :</strong> Vitry-sur-Seine, quartier Le Fort</p>
-    <p><strong>📐 Surface :</strong> 90 m²</p>
-    <p><strong>🚪 Nombre de pièces :</strong> 5 pièces (3 chambres, possibilité 4ème)</p>
-    <p><strong>🏢 Étage :</strong> 3ème étage avec ascenseur</p>
-    <p><strong>🌞 Atouts :</strong> Grande terrasse de 30 m² exposée plein sud, ascenseur, 2 places de parking</p>
-    <p><strong>💰 Prix :</strong> 400 000 € (charges 184 €/mois)</p>
-
-    <h3 style="margin-top:25px; color:#ffb347;">Résumé fluide :</h3>
+                setResult(`
     <div style="
-      background:#1a2949; 
-      padding:15px; 
-      border-radius:8px; 
-      color:#ddd;
-      line-height:1.6;
+      max-width:850px;
+      margin:20px auto;
+      background:#2b3d63;
+      color:#fff;
+      padding:25px;
+      border-radius:12px;
+      box-shadow:0 6px 15px rgba(0,0,0,0.3);
+      font-family:Segoe UI, sans-serif;
+      line-height:1.7;
+      font-size:15px;
     ">
-      ${texteIA}
+      <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
+        📊 Synthèse de l'annonce
+      </h2>
+
+      <p><strong>🏡 Type de bien :</strong> ${fiche.type_bien}</p>
+      <p><strong>📍 Localisation :</strong> ${fiche.localisation}</p>
+      <p><strong>📐 Surface :</strong> ${fiche.surface}</p>
+      <p><strong>🚪 Nombre de pièces :</strong> ${fiche.pieces}</p>
+      <p><strong>🏢 Étage :</strong> ${fiche.etage}</p>
+      <p><strong>🌞 Atouts :</strong> ${fiche.atouts}</p>
+      <p><strong>💰 Prix :</strong> ${fiche.prix}</p>
+      <p><strong>📊 Prix/m² estimé :</strong> ${fiche.prix_m2}</p>
+
+      <h3 style="margin-top:25px; color:#ffb347;">Résumé fluide :</h3>
+      <div style="
+        background:#1a2949; 
+        padding:15px; 
+        border-radius:8px; 
+        color:#ddd;
+        line-height:1.6;
+      ">
+        ${fiche.resume}
+      </div>
     </div>
-  </div>
-`);
-        } catch (e) {
-            setResult("❌ Erreur : " + e.message);
-        }
-    };
+  `);
+            } catch (err) {
+                setResult("❌ Erreur de parsing JSON : " + err.message);
+            }
+
 
     // 📄 Export PDF
     const telechargerPDF = async () => {
