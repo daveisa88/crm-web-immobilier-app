@@ -17,7 +17,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "openai": "^5.23.1",
-    "pdfjs-dist": "^2.16.105",
+    "pdfjs-dist": "^4.2.67",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.1",
