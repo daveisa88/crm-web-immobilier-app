@@ -82,13 +82,13 @@ function AccueilPage() {
                     style={{
                         backgroundColor: "#4fa3f7",
                         color: "#fff",
-                        padding: "8px 16px",   // ✅ plus petit que 12px 22px
+                        padding: "12px 22px",   // ✅ plus petit que 12px 22px
                         borderRadius: 6,
                         fontWeight: "bold",
                         border: "none",
                         cursor: "pointer",
                         fontSize: "14px",      // ✅ texte plus petit
-                        width: "200px",        // ✅ largeur réduite
+                        width: "300px",        // ✅ largeur réduite
                     }}
                 >
                     📘 Mode d'emploi
