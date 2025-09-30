@@ -61,12 +61,12 @@ Annonce brute :
 ${texte}
 `;
 
-            // 👉 Appel API serverless
             const response = await fetch("/api/openai", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: prompt }),
+                body: JSON.stringify({ prompt }), // ✅ et pas message
             });
+
 
             const data = await response.json();
 
