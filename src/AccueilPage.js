@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 function AccueilPage() {
     const navigate = useNavigate();
 
+    // ✅ Messages marketing dynamiques
     const messages = [
         "🚀 Gérez vos fiches clients immobiliers facilement !",
         "📊 Comparez les annonces grâce à l’IA.",
@@ -28,6 +29,7 @@ function AccueilPage() {
         return () => clearInterval(interval);
     }, [messages.length]);
 
+    // ✅ Style générique pour les boutons
     const buttonStyle = (bgColor) => ({
         background: bgColor,
         color: "white",
@@ -54,6 +56,7 @@ function AccueilPage() {
             textAlign: "center",
             padding: "0"
         }}>
+            {/* ✅ Bannière pub dynamique en full width */}
             <div style={{
                 background: "#e91e63",
                 width: "100%",
@@ -67,30 +70,30 @@ function AccueilPage() {
                 {messages[currentMessage]}
             </div>
 
+            {/* Logo + titre */}
             <h1 style={{ fontSize: "32px", marginBottom: "30px", maxWidth: "900px" }}>
                 🏡 Bienvenue sur notre CRM simple et fun, conçu pour vous libérer des tâches répétitives et rendre votre travail plus fluide.
             </h1>
 
+            {/* ✅ Boutons navigation */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "15px" }}>
-                {/* ✅ Ici la bonne route → "/manuel" */}
                 <button
-                    onClick={() => navigate("/manuel")}
-                    style={buttonStyle("#4fa3f7")}
+                    onClick={() => navigate("/mode-emploi")} // ✅ maintenant ouvre bien ModeEmploi.js
+                    style={{
+                        backgroundColor: "#4fa3f7",
+                        color: "#fff",
+                        padding: "12px 22px",
+                        borderRadius: 8,
+                        fontWeight: "bold",
+                        border: "none",
+                        cursor: "pointer",
+                    }}
                 >
                     📘 Mode d'emploi
                 </button>
-
-                <button onClick={() => navigate("/login")} style={buttonStyle("#e91e63")}>
-                    🔑 Connexion
-                </button>
-
-                <button onClick={() => navigate("/fiche-preview")} style={buttonStyle("#1a2a4f")}>
-                    📄 Fiche Client
-                </button>
-
-                <button onClick={() => navigate("/abonnement")} style={buttonStyle("#ff9800")}>
-                    💳 Abonnement
-                </button>
+                <button onClick={() => navigate("/login")} style={buttonStyle("#e91e63")}>🔑 Connexion</button>
+                <button onClick={() => navigate("/fiche-preview")} style={buttonStyle("#1a2a4f")}>📄 Fiche Client</button>
+                <button onClick={() => navigate("/abonnement")} style={buttonStyle("#ff9800")}>💳 Abonnement</button>
             </div>
         </div>
     );
