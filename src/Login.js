@@ -18,7 +18,7 @@ function Login() {
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
 
-    // 🔑 Connexion classique (email/mdp)
+    // 🔑 Connexion classique
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -143,6 +143,7 @@ function Login() {
                     textAlign: "center",
                 }}
             >
+                {/* Retour */}
                 <div style={{ marginBottom: "20px", textAlign: "left" }}>
                     <button
                         onClick={() => navigate("/")}
@@ -165,6 +166,7 @@ function Login() {
                     {mode === "login" ? "🔑 Connexion" : "📝 Créer un compte"}
                 </h2>
 
+                {/* Formulaire email/mdp */}
                 <form
                     onSubmit={handleSubmit}
                     style={{ display: "flex", flexDirection: "column", gap: "15px" }}
@@ -232,44 +234,80 @@ function Login() {
                     </button>
                 </form>
 
+                {/* Séparateur */}
+                <div
+                    style={{
+                        margin: "20px 0",
+                        display: "flex",
+                        alignItems: "center",
+                        textAlign: "center",
+                    }}
+                >
+                    <hr style={{ flex: 1, border: "none", borderTop: "1px solid #ddd" }} />
+                    <span style={{ margin: "0 10px", color: "#666", fontSize: "0.9rem" }}>
+                        ou
+                    </span>
+                    <hr style={{ flex: 1, border: "none", borderTop: "1px solid #ddd" }} />
+                </div>
+
                 {/* Connexion Google */}
                 <button
                     onClick={handleGoogleLogin}
                     style={{
-                        marginTop: "15px",
-                        background: "#db4437",
-                        color: "#fff",
-                        padding: "12px",
-                        border: "none",
+                        marginBottom: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "10px",
+                        background: "#fff",
+                        color: "#555",
+                        padding: "10px",
+                        border: "1px solid #ddd",
                         borderRadius: "8px",
                         cursor: "pointer",
                         fontSize: "1rem",
-                        fontWeight: "bold",
-                        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                        fontWeight: "500",
+                        width: "100%",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                     }}
                 >
-                    🔵 Connexion avec Google
+                    <img
+                        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                        alt="Google logo"
+                        style={{ width: "20px", height: "20px" }}
+                    />
+                    Continuer avec Google
                 </button>
 
                 {/* Connexion GitHub */}
                 <button
                     onClick={handleGithubLogin}
                     style={{
-                        marginTop: "15px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "10px",
                         background: "#333",
                         color: "#fff",
-                        padding: "12px",
+                        padding: "10px",
                         border: "none",
                         borderRadius: "8px",
                         cursor: "pointer",
                         fontSize: "1rem",
-                        fontWeight: "bold",
-                        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                        fontWeight: "500",
+                        width: "100%",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                     }}
                 >
-                    🐙 Connexion avec GitHub
+                    <img
+                        src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                        alt="GitHub logo"
+                        style={{ width: "20px", height: "20px", background: "#fff", borderRadius: "50%" }}
+                    />
+                    Continuer avec GitHub
                 </button>
 
+                {/* Switch mode */}
                 <button
                     onClick={() => setMode(mode === "login" ? "register" : "login")}
                     style={{
@@ -281,6 +319,7 @@ function Login() {
                         borderRadius: "8px",
                         cursor: "pointer",
                         fontSize: "0.9rem",
+                        width: "100%",
                     }}
                 >
                     {mode === "login"

@@ -53,11 +53,7 @@ export default function ComparateurPage() {
         const user = auth.currentUser;
         const email = user?.email?.toLowerCase();
 
-        // ✅ Exception admin → pas de quota
-        if (email === "daveisa@outlook.fr") {
-            console.log("👑 Mode ADMIN → quota illimité");
-        } else {
-            // Vérifie quota
+        if (email !== "daveisa@outlook.fr") {
             const quotaCheck = await checkAndConsumeQuota("comparateur");
             if (!quotaCheck.allowed) {
                 setResultat(quotaCheck.message);
@@ -93,49 +89,40 @@ Analyse aussi le prix demandé pour chaque bien par rapport au prix moyen au m²
 Indique si le bien est surévalué, sous-évalué ou cohérent avec le marché régional.
 Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phrase concise, et calcule une note moyenne globale.`;
 
-
-            import OpenAI from "openai";
-
-            const client = new OpenAI({
-                apiKey: process.env.REACT_APP_OPENAI_API_KEY, // 🔑 lu depuis ton .env
+            // 👉 Appel à ton API serverless sur Vercel
+            const response = await fetch("/api/openai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: prompt }),
             });
-
-            const completion = await client.chat.completions.create({
-                model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.6,
-            });
-
-            const texteIA = completion.choices[0]?.message?.content || "⚠️ Aucun résultat.";
-
 
             const data = await response.json();
             if (!response.ok || data.error) {
-                const msg = data?.error?.message || JSON.stringify(data);
+                const msg = data?.error || JSON.stringify(data);
                 setResultat("❌ API error: " + msg);
                 return;
             }
 
-            const output = data.choices?.[0]?.message?.content || "Réponse vide.";
+            const output = data.reply || "Réponse vide.";
             const gagnant = output.match(/l['’]annonce\s+(\d)/i)?.[1] || "?";
 
             const badge = `
-              <div style="margin-top:20px;text-align:center;">
-                <span style="
-                  display:inline-block;
-                  padding:12px 24px;
-                  background:linear-gradient(90deg,#FFD700,#FFA500);
-                  color:#111;
-                  font-weight:bold;
-                  border-radius:30px;
-                  font-family:Segoe UI, sans-serif;
-                  box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                  font-size:1rem;
-                ">
-                  🏆 Annonce gagnante : ${gagnant}
-                </span>
-              </div>
-            `;
+        <div style="margin-top:20px;text-align:center;">
+          <span style="
+            display:inline-block;
+            padding:12px 24px;
+            background:linear-gradient(90deg,#FFD700,#FFA500);
+            color:#111;
+            font-weight:bold;
+            border-radius:30px;
+            font-family:Segoe UI, sans-serif;
+            box-shadow:0 4px 10px rgba(0,0,0,0.15);
+            font-size:1rem;
+          ">
+            🏆 Annonce gagnante : ${gagnant}
+          </span>
+        </div>
+      `;
 
             setResultat(`<pre style="white-space:pre-wrap;">${output}</pre>${badge}`);
         } catch (error) {
@@ -299,4 +286,3 @@ Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phra
         </div>
     );
 }
-

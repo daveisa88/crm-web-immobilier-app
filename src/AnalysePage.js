@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { getAuth } from "firebase/auth";
-import { checkAndConsumeQuota } from "./quota"; // ✅ ton quota.js dans src/
+import { checkAndConsumeQuota } from "./quota"; // ✅ quota.js
 
 export default function AnalysePage() {
     const navigate = useNavigate();
@@ -11,7 +11,7 @@ export default function AnalysePage() {
     const [htmlFallback, setHtmlFallback] = useState("");
     const [result, setResult] = useState("🧠 Le rapport s'affichera ici...");
 
-    // 🧠 Analyse avec OpenAI + quota
+    // 🧠 Analyse avec OpenAI via ton API serverless
     const analyserAnnonce = async () => {
         setResult("⏳ Vérification de vos crédits...");
 
@@ -24,9 +24,7 @@ export default function AnalysePage() {
 
         try {
             // ✅ Exception admin
-            if (user.email === "daveisa@outlook.fr") {
-                console.log("🎉 Admin détecté → pas de limite de quota");
-            } else {
+            if (user.email !== "daveisa@outlook.fr") {
                 const ok = await checkAndConsumeQuota(user, "analyse");
                 if (!ok) {
                     setResult("⚠️ Vous avez atteint votre quota d'analyses pour ce mois.");
@@ -61,66 +59,42 @@ Annonce brute :
 ${texte}
 `;
 
-            // === Appel API avec SDK OpenAI
-            import OpenAI from "openai";
-
-            const client = new OpenAI({
-                apiKey: process.env.REACT_APP_OPENAI_API_KEY, // 🔑 clé stockée dans .env
+            // 👉 Appel API serverless
+            const response = await fetch("/api/openai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: prompt }),
             });
 
-            try {
-                const completion = await client.chat.completions.create({
-                    model: "gpt-3.5-turbo",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7,
-                });
-
-                const texteIA = completion.choices[0]?.message?.content || "⚠️ Aucun résultat.";
-                setResult(texteIA);
-            } catch (error) {
-                setResult("❌ API error: " + error.message);
+            const data = await response.json();
+            if (!response.ok || data.error) {
+                setResult("❌ API error: " + (data.error || "Erreur inconnue"));
+                return;
             }
 
+            const texteIA = data.reply || "⚠️ Aucun résultat.";
 
-            // 5) Résultat
-            const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
             setResult(`
-            <div style="
-                max-width:850px;
-                margin:20px auto;
-                background:#2b3d63;
-                color:#fff;
-                padding:25px;
-                border-radius:12px;
-                box-shadow:0 6px 15px rgba(0,0,0,0.3);
-                font-family:Segoe UI, sans-serif;
-                line-height:1.7;
-                font-size:15px;
-            ">
-                <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
-                    📊 Synthèse de l'annonce
-                </h2>
-
-    <p><strong>🏡 Type de bien :</strong> Appartement</p>
-    <p><strong>📍 Localisation :</strong> Vitry-sur-Seine, quartier Le Fort</p>
-    <p><strong>📐 Surface :</strong> 90 m²</p>
-    <p><strong>🚪 Nombre de pièces :</strong> 5 pièces (3 chambres, possibilité 4ème)</p>
-    <p><strong>🏢 Étage :</strong> 3ème étage avec ascenseur</p>
-    <p><strong>🌞 Atouts :</strong> Grande terrasse de 30 m² exposée plein sud, ascenseur, 2 places de parking</p>
-    <p><strong>💰 Prix :</strong> 400 000 € (charges 184 €/mois)</p>
-
-    <h3 style="margin-top:25px; color:#ffb347;">Résumé fluide :</h3>
-    <div style="
-      background:#1a2949; 
-      padding:15px; 
-      border-radius:8px; 
-      color:#ddd;
-      line-height:1.6;
-    ">
-      ${texteIA}
-    </div>
-  </div>
-`);
+        <div style="
+          max-width:850px;
+          margin:20px auto;
+          background:#2b3d63;
+          color:#fff;
+          padding:25px;
+          border-radius:12px;
+          box-shadow:0 6px 15px rgba(0,0,0,0.3);
+          font-family:Segoe UI, sans-serif;
+          line-height:1.7;
+          font-size:15px;
+        ">
+          <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
+            📊 Synthèse de l'annonce
+          </h2>
+          <div style="background:#1a2949; padding:15px; border-radius:8px; color:#ddd; line-height:1.6;">
+            ${texteIA}
+          </div>
+        </div>
+      `);
         } catch (e) {
             setResult("❌ Erreur : " + e.message);
         }
@@ -147,14 +121,7 @@ ${texte}
     };
 
     return (
-        <div
-            style={{
-                backgroundColor: "#243b55",
-                minHeight: "100vh",
-                padding: 40,
-                fontFamily: "Segoe UI, sans-serif",
-            }}
-        >
+        <div style={{ backgroundColor: "#243b55", minHeight: "100vh", padding: 40, fontFamily: "Segoe UI, sans-serif" }}>
             {/* Titre */}
             <h1
                 style={{
@@ -204,9 +171,7 @@ ${texte}
             >
                 {/* Champ annonce */}
                 <div style={{ marginBottom: 20, textAlign: "center" }}>
-                    <label style={{ fontWeight: "bold", color: "#1a2a4f" }}>
-                        📎 Lien de l'annonce
-                    </label>
+                    <label style={{ fontWeight: "bold", color: "#1a2a4f" }}>📎 Lien de l'annonce</label>
                     <textarea
                         rows={2}
                         value={annonce}
@@ -224,9 +189,7 @@ ${texte}
 
                 {/* Champ HTML */}
                 <div style={{ marginBottom: 20, textAlign: "center" }}>
-                    <label style={{ fontWeight: "bold", color: "#1a2a4f" }}>
-                        🛠️ Code HTML (optionnel)
-                    </label>
+                    <label style={{ fontWeight: "bold", color: "#1a2a4f" }}>🛠️ Code HTML (optionnel)</label>
                     <textarea
                         rows={6}
                         value={htmlFallback}

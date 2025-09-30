@@ -1,6 +1,5 @@
 // src/App.js
 import React, { useEffect, useState } from "react";
-import { Analytics } from "@vercel/analytics/react"
 import {
     HashRouter as Router,
     Routes,
@@ -98,7 +97,7 @@ function AppRoutes() {
             {/* Pages publiques */}
             <Route path="/" element={<AccueilPage />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/manuel" element={<ModeEmploi />} />
+            <Route path="/manuel" element={<ManuelPage />} />
             <Route path="/abonnement" element={<AbonnementPage />} />
             <Route path="/fiche-preview" element={<FicheClientPreview />} />
             <Route path="/paiement" element={<PaiementPage />} />
