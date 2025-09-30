@@ -65,7 +65,7 @@ ${texte}
             const response = await fetch("/api/openai", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: prompt }),
+                body: JSON.stringify({ prompt }),
             });
 
             const data = await response.json();
@@ -74,9 +74,6 @@ ${texte}
                 setResult("❌ API error: " + (data.error || "Erreur inconnue"));
                 return;
             }
-
-          
-
 
             // 5) Résultat
             const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
