@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    sendPasswordResetEmail, // ✅ ajout
+    sendPasswordResetEmail,
+    GoogleAuthProvider,
+    GithubAuthProvider,
+    signInWithPopup,
 } from "firebase/auth";
 import { collection, query, where, getDocs, setDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -15,57 +18,16 @@ function Login() {
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
 
+    // 🔑 Connexion classique (email/mdp)
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (mode === "login") {
                 const cred = await signInWithEmailAndPassword(auth, email, password);
-                const userEmail = cred.user.email?.toLowerCase();
-
-                const q = query(collection(db, "users"), where("email", "==", userEmail));
-                const snap = await getDocs(q);
-
-                if (!snap.empty) {
-                    const data = snap.docs[0].data();
-                    if (data.role?.toLowerCase().trim() === "admin") {
-                        setMessage("✅ Connexion ADMIN réussie !");
-                        navigate("/Feuille");
-                        return;
-                    }
-                    if (data.subscription?.status === "active" && data.subscription?.endDate) {
-                        const end = new Date(data.subscription.endDate);
-                        const now = new Date();
-                        const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-
-                        if (diff > 0) {
-                            setMessage(`⏳ Il vous reste ${diff} jours d’abonnement.`);
-                            navigate("/Feuille");
-                        } else {
-                            setMessage("⚠️ Votre abonnement a expiré.");
-                            navigate("/abonnement");
-                        }
-                    } else {
-                        setMessage("⚠️ Aucun abonnement actif.");
-                        navigate("/abonnement");
-                    }
-                } else {
-                    setMessage("⚠️ Utilisateur sans données Firestore.");
-                    navigate("/abonnement");
-                }
+                await checkUserFirestore(cred.user);
             } else {
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
-                const userEmail = cred.user.email?.toLowerCase();
-
-                await setDoc(doc(db, "users", cred.user.uid), {
-                    email: userEmail,
-                    createdAt: new Date().toISOString(),
-                    role: "user",
-                    subscription: {
-                        status: "inactive",
-                        endDate: null,
-                    },
-                });
-
+                await createUserFirestore(cred.user);
                 setMessage("✅ Compte créé avec succès !");
                 navigate("/abonnement");
             }
@@ -74,7 +36,7 @@ function Login() {
         }
     };
 
-    // ✅ Fonction reset password
+    // 🔄 Réinitialisation mot de passe
     const handleResetPassword = async () => {
         if (!email) {
             setMessage("⚠️ Entrez d’abord votre email pour réinitialiser.");
@@ -86,6 +48,76 @@ function Login() {
         } catch (err) {
             setMessage(`❌ Erreur reset : ${err.message}`);
         }
+    };
+
+    // 🔑 Connexion Google
+    const handleGoogleLogin = async () => {
+        try {
+            const provider = new GoogleAuthProvider();
+            const cred = await signInWithPopup(auth, provider);
+            await checkUserFirestore(cred.user);
+        } catch (err) {
+            setMessage(`❌ Erreur Google : ${err.message}`);
+        }
+    };
+
+    // 🔑 Connexion GitHub
+    const handleGithubLogin = async () => {
+        try {
+            const provider = new GithubAuthProvider();
+            const cred = await signInWithPopup(auth, provider);
+            await checkUserFirestore(cred.user);
+        } catch (err) {
+            setMessage(`❌ Erreur GitHub : ${err.message}`);
+        }
+    };
+
+    // 🔍 Vérifier Firestore pour l’utilisateur
+    const checkUserFirestore = async (user) => {
+        const userEmail = user.email?.toLowerCase();
+        const q = query(collection(db, "users"), where("email", "==", userEmail));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+            const data = snap.docs[0].data();
+            if (data.role?.toLowerCase().trim() === "admin") {
+                setMessage("✅ Connexion ADMIN réussie !");
+                navigate("/Feuille");
+                return;
+            }
+            if (data.subscription?.status === "active" && data.subscription?.endDate) {
+                const end = new Date(data.subscription.endDate);
+                const now = new Date();
+                const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                if (diff > 0) {
+                    setMessage(`⏳ Il vous reste ${diff} jours d’abonnement.`);
+                    navigate("/Feuille");
+                } else {
+                    setMessage("⚠️ Votre abonnement a expiré.");
+                    navigate("/abonnement");
+                }
+            } else {
+                setMessage("⚠️ Aucun abonnement actif.");
+                navigate("/abonnement");
+            }
+        } else {
+            await createUserFirestore(user);
+            navigate("/abonnement");
+        }
+    };
+
+    // 🆕 Créer doc Firestore
+    const createUserFirestore = async (user) => {
+        const userEmail = user.email?.toLowerCase();
+        await setDoc(doc(db, "users", user.uid), {
+            email: userEmail,
+            createdAt: new Date().toISOString(),
+            role: "user",
+            subscription: {
+                status: "inactive",
+                endDate: null,
+            },
+        });
     };
 
     return (
@@ -164,7 +196,6 @@ function Login() {
                         }}
                     />
 
-                    {/* ✅ Mot de passe oublié */}
                     {mode === "login" && (
                         <button
                             type="button"
@@ -201,6 +232,44 @@ function Login() {
                     </button>
                 </form>
 
+                {/* Connexion Google */}
+                <button
+                    onClick={handleGoogleLogin}
+                    style={{
+                        marginTop: "15px",
+                        background: "#db4437",
+                        color: "#fff",
+                        padding: "12px",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "1rem",
+                        fontWeight: "bold",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                    }}
+                >
+                    🔵 Connexion avec Google
+                </button>
+
+                {/* Connexion GitHub */}
+                <button
+                    onClick={handleGithubLogin}
+                    style={{
+                        marginTop: "15px",
+                        background: "#333",
+                        color: "#fff",
+                        padding: "12px",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "1rem",
+                        fontWeight: "bold",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                    }}
+                >
+                    🐙 Connexion avec GitHub
+                </button>
+
                 <button
                     onClick={() => setMode(mode === "login" ? "register" : "login")}
                     style={{
@@ -212,7 +281,6 @@ function Login() {
                         borderRadius: "8px",
                         cursor: "pointer",
                         fontSize: "0.9rem",
-                        transition: "0.3s",
                     }}
                 >
                     {mode === "login"

@@ -98,7 +98,7 @@ function AppRoutes() {
             {/* Pages publiques */}
             <Route path="/" element={<AccueilPage />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/manuel" element={<ManuelPage />} />
+            <Route path="/manuel" element={<ModeEmploi />} />
             <Route path="/abonnement" element={<AbonnementPage />} />
             <Route path="/fiche-preview" element={<FicheClientPreview />} />
             <Route path="/paiement" element={<PaiementPage />} />
