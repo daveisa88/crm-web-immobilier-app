@@ -52,39 +52,35 @@ export default function AnalysePage() {
                 texte = texte.slice(0, MAX_LONGUEUR) + " ... [Texte tronqué pour analyse]";
             }
 
+            // === Prompt IA
             const prompt = `
 Tu es un expert immobilier. Donne-moi une fiche synthèse et un résumé fluide de l’annonce suivante.
 - La fiche doit être cohérente avec les infos trouvées (surface, prix, pièces…).
+- Ajoute aussi une estimation du prix au m² par rapport à la région si possible.
 - Le résumé doit être naturel et lisible pour un client.
 
 Annonce brute :
 ${texte}
 `;
 
-            // === Appel API
-            const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            // === Appel API serverless
+            const response = await fetch("/api/openai", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-                },
-                body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt }), // ✅ correspond à api/openai.js
             });
 
             const data = await response.json();
 
             if (!response.ok || data.error) {
-                const msg = data?.error?.message || JSON.stringify(data);
+                const msg = data?.error || JSON.stringify(data);
                 setResult("❌ API error: " + msg);
                 return;
             }
 
-            // 5) Résultat
-            const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
+            // ✅ data.result correspond à la réponse IA
+            const texteIA = data.result || "⚠️ Aucun résultat.";
+
             setResult(`
             <div style="
                 max-width:850px;
@@ -101,27 +97,17 @@ ${texte}
                 <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
                     📊 Synthèse de l'annonce
                 </h2>
-
-    <p><strong>🏡 Type de bien :</strong> Appartement</p>
-    <p><strong>📍 Localisation :</strong> Vitry-sur-Seine, quartier Le Fort</p>
-    <p><strong>📐 Surface :</strong> 90 m²</p>
-    <p><strong>🚪 Nombre de pièces :</strong> 5 pièces (3 chambres, possibilité 4ème)</p>
-    <p><strong>🏢 Étage :</strong> 3ème étage avec ascenseur</p>
-    <p><strong>🌞 Atouts :</strong> Grande terrasse de 30 m² exposée plein sud, ascenseur, 2 places de parking</p>
-    <p><strong>💰 Prix :</strong> 400 000 € (charges 184 €/mois)</p>
-
-    <h3 style="margin-top:25px; color:#ffb347;">Résumé fluide :</h3>
-    <div style="
-      background:#1a2949; 
-      padding:15px; 
-      border-radius:8px; 
-      color:#ddd;
-      line-height:1.6;
-    ">
-      ${texteIA}
-    </div>
-  </div>
-`);
+                <div style="
+                  background:#1a2949; 
+                  padding:15px; 
+                  border-radius:8px; 
+                  color:#ddd;
+                  line-height:1.6;
+                ">
+                  ${texteIA}
+                </div>
+            </div>
+            `);
         } catch (e) {
             setResult("❌ Erreur : " + e.message);
         }
