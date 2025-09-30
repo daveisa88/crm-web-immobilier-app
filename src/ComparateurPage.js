@@ -17,7 +17,7 @@ export default function ComparateurPage() {
     const pdfRef = useRef(null);
     const auth = getAuth();
 
-    // 🔎 OCR pour lire le texte des PDF
+    // 🔎 OCR PDF
     const extractTextWithOCR = async (file) => {
         const reader = new FileReader();
         return new Promise((resolve, reject) => {
@@ -76,7 +76,7 @@ export default function ComparateurPage() {
             const textes = await Promise.all(fichiers.map(extractTextWithOCR));
 
             const prompt = `
-Tu es un expert immobilier. Analyse et compare ces 3 annonces :
+Tu es un expert immobilier. Compare ces 3 annonces immobilières :
 
 Annonce 1 :
 ${textes[0]}
@@ -88,23 +88,19 @@ Annonce 3 :
 ${textes[2]}
 
 Tâches :
-1. Pour chaque annonce, extrais : localisation, surface, prix, nombre de pièces, atouts principaux.
-2. Calcule le prix au m² = prix / surface.
-3. Compare ce prix au marché immobilier régional et indique si le bien est sous-évalué, surévalué ou cohérent.
-4. Donne une note de 1 à 10 sur : surface, pièces, confort/chauffage, exposition soleil, terrain/extérieur.
-5. Calcule une **note moyenne globale** pour chaque annonce.
-6. Termine par une phrase claire : “L’annonce gagnante est l’annonce X” (où X = 1, 2 ou 3).
-
-Format demandé :
-- Tableau comparatif clair (par annonce).
-- Résumé fluide et lisible pour un client.
-- Conclusion finale avec l’annonce gagnante.
+1. Extrais localisation, surface, prix, pièces, atouts.
+2. Calcule prix au m² (prix/surface).
+3. Indique si le prix est surévalué, sous-évalué ou cohérent avec le marché.
+4. Note chaque annonce (1-10) sur surface, pièces, confort, exposition, terrain.
+5. Donne une note moyenne globale.
+6. Conclus par : “🏆 L’annonce gagnante est l’annonce X”.
 `;
 
+            // 👉 Appel API serverless (même logique que AnalysePage)
             const response = await fetch("/api/openai", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({ prompt }), // ✅ on envoie prompt
             });
 
             const data = await response.json();
@@ -114,7 +110,8 @@ Format demandé :
                 return;
             }
 
-            const output = data.reply || data.result || "Réponse vide.";
+            // ✅ Cohérent avec AnalysePage → data.result
+            const output = data.result || "⚠️ Aucun résultat.";
             const gagnant = output.match(/annonce\s+(\d)/i)?.[1] || "?";
 
             const badge = `
@@ -167,7 +164,6 @@ Format demandé :
 
     return (
         <div style={{ backgroundColor: "#243b55", minHeight: "100vh", padding: 40 }}>
-            {/* Bouton retour */}
             <div style={{ textAlign: "center", marginBottom: 30 }}>
                 <button
                     onClick={() => navigate(-1)}
@@ -179,14 +175,13 @@ Format demandé :
                         border: "none",
                         cursor: "pointer",
                         fontWeight: "bold",
-                        boxShadow: "0 4px 8px rgba(233,30,99,0.4)"
+                        boxShadow: "0 4px 8px rgba(233,30,99,0.4)",
                     }}
                 >
                     🔙 Retour à la feuille
                 </button>
             </div>
 
-            {/* Carte principale */}
             <div
                 style={{
                     background: "#ffffff",
@@ -194,7 +189,7 @@ Format demandé :
                     maxWidth: 750,
                     margin: "auto",
                     borderRadius: 16,
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.25)"
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
                 }}
             >
                 <h2
@@ -202,13 +197,13 @@ Format demandé :
                         textAlign: "center",
                         color: "#1a2a4f",
                         marginBottom: 30,
-                        fontWeight: "bold"
+                        fontWeight: "bold",
                     }}
                 >
                     📊 Comparateur PDF IA
                 </h2>
 
-                {/* Upload fichiers */}
+                {/* Upload */}
                 <div style={{ textAlign: "center", marginBottom: 30 }}>
                     {[1, 2, 3].map((num) => (
                         <div key={num} style={{ marginBottom: "15px" }}>
@@ -224,7 +219,7 @@ Format demandé :
                                     borderRadius: "8px",
                                     background: "#f9f9fb",
                                     cursor: "pointer",
-                                    width: "80%"
+                                    width: "80%",
                                 }}
                                 onChange={(e) => {
                                     const fileName =
@@ -239,7 +234,7 @@ Format demandé :
                                     marginTop: "5px",
                                     fontSize: "14px",
                                     color: "#1a2a4f",
-                                    fontWeight: "bold"
+                                    fontWeight: "bold",
                                 }}
                             >
                                 Aucun fichier choisi
@@ -254,7 +249,7 @@ Format demandé :
                         textAlign: "center",
                         display: "flex",
                         justifyContent: "center",
-                        gap: "20px"
+                        gap: "20px",
                     }}
                 >
                     <button
@@ -266,7 +261,7 @@ Format demandé :
                             border: "none",
                             borderRadius: "10px",
                             cursor: "pointer",
-                            fontWeight: "bold"
+                            fontWeight: "bold",
                         }}
                     >
                         🧠 Lancer la comparaison
@@ -280,7 +275,7 @@ Format demandé :
                             border: "none",
                             borderRadius: "10px",
                             cursor: "pointer",
-                            fontWeight: "bold"
+                            fontWeight: "bold",
                         }}
                     >
                         📄 Télécharger le rapport
@@ -298,7 +293,7 @@ Format demandé :
                         border: "2px solid #1a2a4f",
                         color: "#333",
                         fontFamily: "Segoe UI",
-                        minHeight: 100
+                        minHeight: 100,
                     }}
                     dangerouslySetInnerHTML={{ __html: resultat }}
                 />
