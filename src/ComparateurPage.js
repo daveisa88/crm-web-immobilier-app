@@ -1,10 +1,11 @@
+// ComparateurPage.js
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { checkAndConsumeQuota } from "./quota"; // ⚡ quota
+import { checkAndConsumeQuota } from "./quota";
 import { getAuth } from "firebase/auth";
 
 // Config worker PDF.js
@@ -16,7 +17,7 @@ export default function ComparateurPage() {
     const pdfRef = useRef(null);
     const auth = getAuth();
 
-    // 🧠 OCR avec Tesseract
+    // 🔎 OCR pour lire le texte des PDF
     const extractTextWithOCR = async (file) => {
         const reader = new FileReader();
         return new Promise((resolve, reject) => {
@@ -45,7 +46,7 @@ export default function ComparateurPage() {
         });
     };
 
-    // 🔍 Analyse IA avec quota (sauf admin)
+    // 🧠 Comparaison IA
     const analyserComparaisonIA = async () => {
         setResultat("⏳ Vérification quota…");
 
@@ -61,9 +62,12 @@ export default function ComparateurPage() {
         }
 
         setResultat("⏳ Analyse en cours…");
-        const fichiers = ["pdf1", "pdf2", "pdf3"].map(id => document.getElementById(id).files[0]);
 
-        if (fichiers.some(f => !f)) {
+        const fichiers = ["pdf1", "pdf2", "pdf3"].map(
+            (id) => document.getElementById(id).files[0]
+        );
+
+        if (fichiers.some((f) => !f)) {
             setResultat("❌ Merci de sélectionner les 3 fichiers PDF.");
             return;
         }
@@ -71,7 +75,8 @@ export default function ComparateurPage() {
         try {
             const textes = await Promise.all(fichiers.map(extractTextWithOCR));
 
-            const prompt = `Voici 3 annonces immobilières :
+            const prompt = `
+Tu es un expert immobilier. Analyse et compare ces 3 annonces :
 
 Annonce 1 :
 ${textes[0]}
@@ -82,18 +87,25 @@ ${textes[1]}
 Annonce 3 :
 ${textes[2]}
 
-Compare les 3 biens selon : surface, nombre de pièces, confort du chauffage, exposition au soleil, terrain.
-Donne une note de 1 à 10 pour chaque critère par annonce.
-Analyse aussi le prix demandé pour chaque bien par rapport au prix moyen au m² de sa région.
-Indique si le bien est surévalué, sous-évalué ou cohérent avec le marché régional.
-Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phrase concise, et calcule une note moyenne globale.`;
+Tâches :
+1. Pour chaque annonce, extrais : localisation, surface, prix, nombre de pièces, atouts principaux.
+2. Calcule le prix au m² = prix / surface.
+3. Compare ce prix au marché immobilier régional et indique si le bien est sous-évalué, surévalué ou cohérent.
+4. Donne une note de 1 à 10 sur : surface, pièces, confort/chauffage, exposition soleil, terrain/extérieur.
+5. Calcule une **note moyenne globale** pour chaque annonce.
+6. Termine par une phrase claire : “L’annonce gagnante est l’annonce X” (où X = 1, 2 ou 3).
+
+Format demandé :
+- Tableau comparatif clair (par annonce).
+- Résumé fluide et lisible pour un client.
+- Conclusion finale avec l’annonce gagnante.
+`;
 
             const response = await fetch("/api/openai", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt }), // ✅ et pas message
+                body: JSON.stringify({ prompt }),
             });
-
 
             const data = await response.json();
             if (!response.ok || data.error) {
@@ -102,29 +114,35 @@ Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phra
                 return;
             }
 
-            // ✅ Uniformisé → data.reply
-            const output = data.reply || "Réponse vide.";
-            const gagnant = output.match(/l['’]annonce\s+(\d)/i)?.[1] || "?";
+            const output = data.reply || data.result || "Réponse vide.";
+            const gagnant = output.match(/annonce\s+(\d)/i)?.[1] || "?";
 
             const badge = `
-        <div style="margin-top:20px;text-align:center;">
-          <span style="
-            display:inline-block;
-            padding:12px 24px;
-            background:linear-gradient(90deg,#FFD700,#FFA500);
-            color:#111;
-            font-weight:bold;
-            border-radius:30px;
-            font-family:Segoe UI, sans-serif;
-            box-shadow:0 4px 10px rgba(0,0,0,0.15);
-            font-size:1rem;
-          ">
-            🏆 Annonce gagnante : ${gagnant}
-          </span>
-        </div>
-      `;
+            <div style="margin-top:20px;text-align:center;">
+                <span style="
+                    display:inline-block;
+                    padding:12px 24px;
+                    background:linear-gradient(90deg,#FFD700,#FFA500);
+                    color:#111;
+                    font-weight:bold;
+                    border-radius:30px;
+                    font-family:Segoe UI, sans-serif;
+                    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+                    font-size:1rem;
+                ">
+                    🏆 Annonce gagnante : ${gagnant}
+                </span>
+            </div>`;
 
-            setResultat(`<pre style="white-space:pre-wrap;">${output}</pre>${badge}`);
+            setResultat(`
+                <div style="background:#2b3d63;color:#fff;padding:20px;border-radius:12px;">
+                    <h3 style="text-align:center;color:#ffd700;">📊 Résultats de la comparaison</h3>
+                    <div style="background:#1a2949;padding:15px;border-radius:8px;white-space:pre-wrap;">
+                        ${output}
+                    </div>
+                    ${badge}
+                </div>
+            `);
         } catch (error) {
             console.error("Erreur analyse:", error);
             setResultat("❌ Erreur pendant l'analyse.");
@@ -161,7 +179,7 @@ Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phra
                         border: "none",
                         cursor: "pointer",
                         fontWeight: "bold",
-                        boxShadow: "0 4px 8px rgba(0,0,0,0.3)"
+                        boxShadow: "0 4px 8px rgba(233,30,99,0.4)"
                     }}
                 >
                     🔙 Retour à la feuille
@@ -209,8 +227,10 @@ Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phra
                                     width: "80%"
                                 }}
                                 onChange={(e) => {
-                                    const fileName = e.target.files[0]?.name || "Aucun fichier choisi";
-                                    document.getElementById(`label${num}`).innerText = fileName;
+                                    const fileName =
+                                        e.target.files[0]?.name || "Aucun fichier choisi";
+                                    document.getElementById(`label${num}`).innerText =
+                                        fileName;
                                 }}
                             />
                             <div
