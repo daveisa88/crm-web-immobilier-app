@@ -59,20 +59,23 @@ Annonce brute :
 ${texte}
 `;
 
-      // 👉 Appel API serverless
-      const response = await fetch("/api/openai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt }),
-      });
+        // 👉 Appel API serverless
+        const response = await fetch("/api/openai", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: prompt }),
+        });
 
-      const data = await response.json();
-      if (!response.ok || data.error) {
-        setResult("❌ API error: " + (data.error || "Erreur inconnue"));
-        return;
-      }
+        const data = await response.json();
 
-      const texteIA = data.reply || "⚠️ Aucun résultat.";
+        if (!response.ok || data.error) {
+            setResult("❌ API error: " + (data.error || "Erreur inconnue"));
+            return;
+        }
+
+        // ✅ la bonne clé c'est "result"
+        const texteIA = data.result || "⚠️ Aucun résultat.";
+        setResult(texteIA);
 
       setResult(`
         <div style="
