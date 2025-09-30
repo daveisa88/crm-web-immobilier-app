@@ -88,7 +88,6 @@ Analyse aussi le prix demandé pour chaque bien par rapport au prix moyen au m²
 Indique si le bien est surévalué, sous-évalué ou cohérent avec le marché régional.
 Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phrase concise, et calcule une note moyenne globale.`;
 
-            // 👉 Appel à ton API serverless sur Vercel
             const response = await fetch("/api/openai", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -102,11 +101,8 @@ Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phra
                 return;
             }
 
-            // ❌ Mauvais
-            // const output = data.reply || "Réponse vide.";
-
-            // ✅ Bon champ
-            const output = data.result || "Réponse vide.";
+            // ✅ Uniformisé → data.reply
+            const output = data.reply || "Réponse vide.";
             const gagnant = output.match(/l['’]annonce\s+(\d)/i)?.[1] || "?";
 
             const badge = `

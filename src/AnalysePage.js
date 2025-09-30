@@ -65,7 +65,7 @@ ${texte}
             const response = await fetch("/api/openai", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({ message: prompt }),
             });
 
             const data = await response.json();
@@ -75,8 +75,13 @@ ${texte}
                 return;
             }
 
-            const texteIA = data.result || "⚠️ Aucun résultat.";
-            setResult(texteIA);
+            // ✅ Uniformisé → data.reply
+            const texteIA = data.reply || "⚠️ Aucun résultat.";
+            setResult(`
+  <div style="...">
+    <h2 style="...">📊 Synthèse de l'annonce</h2>
+    <div style="...">
+      ${texteIA}
 
 
             // 5) Résultat
