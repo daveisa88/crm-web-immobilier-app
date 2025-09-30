@@ -102,7 +102,11 @@ Puis termine en indiquant clairement l'annonce la plus avantageuse avec une phra
                 return;
             }
 
-            const output = data.reply || "Réponse vide.";
+            // ❌ Mauvais
+            // const output = data.reply || "Réponse vide.";
+
+            // ✅ Bon champ
+            const output = data.result || "Réponse vide.";
             const gagnant = output.match(/l['’]annonce\s+(\d)/i)?.[1] || "?";
 
             const badge = `
