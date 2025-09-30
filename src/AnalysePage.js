@@ -11,7 +11,7 @@ export default function AnalysePage() {
     const [htmlFallback, setHtmlFallback] = useState("");
     const [result, setResult] = useState("🧠 Le rapport s'affichera ici...");
 
-    // 🧠 Analyse avec OpenAI + quota
+    /// 🧠 Analyse avec OpenAI + parsing HTML
     const analyserAnnonce = async () => {
         setResult("⏳ Vérification de vos crédits...");
 
@@ -36,82 +36,105 @@ export default function AnalysePage() {
 
             setResult("⏳ Analyse en cours...");
 
-            // === Extraction texte
+            // === Extraction texte optimisée
             let texte = "";
             if (htmlFallback) {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlFallback, "text/html");
-                doc.querySelectorAll("script, style, noscript").forEach((el) => el.remove());
-                texte = doc.body.innerText.replace(/\s+/g, " ").trim();
+
+                const titre = doc.querySelector("title")?.innerText || "";
+                const surface = doc.querySelector('meta[name="ad:surface"]')?.content || "";
+                const prix = doc.querySelector('meta[name="ad:prix"]')?.content || "";
+                const pieces = doc.querySelector('meta[name="ad:nb_pieces"]')?.content || "";
+                const etage = doc.querySelector('meta[name="ad:etage"]')?.content || "";
+                const commodites = doc.querySelector('meta[name="ad:commodites"]')?.content || "";
+                const dpe = doc.querySelector('meta[name="ad:DPE"]')?.content || "";
+                const cp = doc.querySelector('meta[name="ad:cp"]')?.content || "";
+                const ville = titre.match(/([A-Za-zÀ-ÿ\s]+)\s*\(\d{5}\)/)?.[1] || "";
+
+                texte = `
+Titre : ${titre}
+Localisation : ${ville} (${cp})
+Surface : ${surface} m²
+Prix : ${prix} €
+Nombre de pièces : ${pieces}
+Étage : ${etage}
+Commodités : ${commodites}
+DPE : ${dpe}
+            `;
             } else {
                 texte = `Voici une annonce : ${annonce}`;
             }
 
-            const MAX_LONGUEUR = 12000;
+            const MAX_LONGUEUR = 8000;
             if (texte.length > MAX_LONGUEUR) {
                 texte = texte.slice(0, MAX_LONGUEUR) + " ... [Texte tronqué pour analyse]";
             }
 
-            // === Prompt IA
+            // === Prompt IA amélioré
             const prompt = `
 Tu es un expert immobilier. Donne-moi une fiche synthèse et un résumé fluide de l’annonce suivante.
 - La fiche doit être cohérente avec les infos trouvées (surface, prix, pièces…).
-- Ajoute aussi une estimation du prix au m² par rapport à la région si possible.
+- Calcule le prix au m² = Prix / Surface.
+- Compare ce prix au marché immobilier moyen de la région et indique si le bien est surévalué, sous-évalué ou cohérent.
 - Le résumé doit être naturel et lisible pour un client.
 
 Annonce brute :
 ${texte}
-`;
+        `;
 
-            // === Appel API serverless
-            const response = await fetch("/api/openai", {
+            // === Appel API OpenAI
+            const response = await fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt }), // ✅ correspond à api/openai.js
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7,
+                }),
             });
 
             const data = await response.json();
 
             if (!response.ok || data.error) {
-                const msg = data?.error || JSON.stringify(data);
+                const msg = data?.error?.message || JSON.stringify(data);
                 setResult("❌ API error: " + msg);
                 return;
             }
 
-            // ✅ data.result correspond à la réponse IA
-            const texteIA = data.result || "⚠️ Aucun résultat.";
+            const texteIA = data.choices?.[0]?.message?.content || "⚠️ Aucun résultat.";
 
+            // === Affichage stylé
             setResult(`
-            <div style="
-                max-width:850px;
-                margin:20px auto;
-                background:#2b3d63;
-                color:#fff;
-                padding:25px;
-                border-radius:12px;
-                box-shadow:0 6px 15px rgba(0,0,0,0.3);
-                font-family:Segoe UI, sans-serif;
-                line-height:1.7;
-                font-size:15px;
-            ">
-                <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
-                    📊 Synthèse de l'annonce
-                </h2>
-                <div style="
-                  background:#1a2949; 
-                  padding:15px; 
-                  border-radius:8px; 
-                  color:#ddd;
-                  line-height:1.6;
-                ">
-                  ${texteIA}
-                </div>
+        <div style="
+            max-width:850px;
+            margin:20px auto;
+            background:#2b3d63;
+            color:#fff;
+            padding:25px;
+            border-radius:12px;
+            box-shadow:0 6px 15px rgba(0,0,0,0.3);
+            font-family:Segoe UI, sans-serif;
+            line-height:1.7;
+            font-size:15px;
+        ">
+            <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
+                📊 Synthèse de l'annonce
+            </h2>
+            <div style="background:#1a2949; padding:15px; border-radius:8px; color:#ddd;">
+                ${texteIA}
             </div>
-            `);
+        </div>
+        `);
+
         } catch (e) {
             setResult("❌ Erreur : " + e.message);
         }
     };
+
 
     // 📄 Export PDF
     const telechargerPDF = async () => {
