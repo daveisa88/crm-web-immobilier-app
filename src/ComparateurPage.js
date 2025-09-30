@@ -1,4 +1,4 @@
-// ComparateurPage.js
+// ComparateurPage.js (version stylisée comme AnalysePage)
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Tesseract from "tesseract.js";
@@ -8,7 +8,6 @@ import html2canvas from "html2canvas";
 import { checkAndConsumeQuota } from "./quota";
 import { getAuth } from "firebase/auth";
 
-// Config worker PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export default function ComparateurPage() {
@@ -17,7 +16,7 @@ export default function ComparateurPage() {
     const pdfRef = useRef(null);
     const auth = getAuth();
 
-    // 🔎 OCR PDF
+    // OCR PDF -> texte
     const extractTextWithOCR = async (file) => {
         const reader = new FileReader();
         return new Promise((resolve, reject) => {
@@ -34,7 +33,9 @@ export default function ComparateurPage() {
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
                         await page.render({ canvasContext: context, viewport }).promise;
-                        const { data: { text } } = await Tesseract.recognize(canvas, "fra");
+                        const {
+                            data: { text },
+                        } = await Tesseract.recognize(canvas, "fra");
                         allText += text + "\n\n";
                     }
                     resolve(allText.trim());
@@ -46,7 +47,7 @@ export default function ComparateurPage() {
         });
     };
 
-    // 🧠 Comparaison IA
+    // IA comparateur
     const analyserComparaisonIA = async () => {
         setResultat("⏳ Vérification quota…");
 
@@ -62,7 +63,6 @@ export default function ComparateurPage() {
         }
 
         setResultat("⏳ Analyse en cours…");
-
         const fichiers = ["pdf1", "pdf2", "pdf3"].map(
             (id) => document.getElementById(id).files[0]
         );
@@ -76,7 +76,7 @@ export default function ComparateurPage() {
             const textes = await Promise.all(fichiers.map(extractTextWithOCR));
 
             const prompt = `
-Tu es un expert immobilier. Compare ces 3 annonces immobilières :
+Tu es un expert immobilier. Compare ces 3 annonces immobilières : 
 
 Annonce 1 :
 ${textes[0]}
@@ -87,20 +87,24 @@ ${textes[1]}
 Annonce 3 :
 ${textes[2]}
 
-Tâches :
-1. Extrais localisation, surface, prix, pièces, atouts.
-2. Calcule prix au m² (prix/surface).
-3. Indique si le prix est surévalué, sous-évalué ou cohérent avec le marché.
-4. Note chaque annonce (1-10) sur surface, pièces, confort, exposition, terrain.
-5. Donne une note moyenne globale.
-6. Conclus par : “🏆 L’annonce gagnante est l’annonce X”.
+Pour chaque annonce, donne une fiche synthèse claire :
+- Type de bien
+- Localisation
+- Surface
+- Nombre de pièces
+- Atouts
+- Prix + prix au m²
+- Indique si le prix est surévalué, sous-évalué ou cohérent avec le marché régional
+
+Ensuite :
+- Donne une note de 1 à 10 par annonce
+- Conclus par l’annonce gagnante 🏆
 `;
 
-            // 👉 Appel API serverless (même logique que AnalysePage)
             const response = await fetch("/api/openai", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt }), // ✅ on envoie prompt
+                body: JSON.stringify({ prompt }),
             });
 
             const data = await response.json();
@@ -110,43 +114,34 @@ Tâches :
                 return;
             }
 
-            // ✅ Cohérent avec AnalysePage → data.result
-            const output = data.result || "⚠️ Aucun résultat.";
-            const gagnant = output.match(/annonce\s+(\d)/i)?.[1] || "?";
+            // ✅ Texte IA
+            const texteIA = data.result || "⚠️ Réponse vide.";
 
-            const badge = `
-            <div style="margin-top:20px;text-align:center;">
-                <span style="
-                    display:inline-block;
-                    padding:12px 24px;
-                    background:linear-gradient(90deg,#FFD700,#FFA500);
-                    color:#111;
-                    font-weight:bold;
-                    border-radius:30px;
-                    font-family:Segoe UI, sans-serif;
-                    box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                    font-size:1rem;
-                ">
-                    🏆 Annonce gagnante : ${gagnant}
-                </span>
-            </div>`;
-
+            // Mise en forme style "AnalysePage"
             setResultat(`
-                <div style="background:#2b3d63;color:#fff;padding:20px;border-radius:12px;">
-                    <h3 style="text-align:center;color:#ffd700;">📊 Résultats de la comparaison</h3>
-                    <div style="background:#1a2949;padding:15px;border-radius:8px;white-space:pre-wrap;">
-                        ${output}
-                    </div>
-                    ${badge}
-                </div>
-            `);
+        <div style="
+          max-width:900px;
+          margin:20px auto;
+          font-family:Segoe UI, sans-serif;
+          line-height:1.7;
+          font-size:15px;
+          color:#fff;
+        ">
+          <h2 style="text-align:center; margin-bottom:20px; color:#ffd700;">
+            📊 Comparaison des annonces
+          </h2>
+          <div style="background:#2b3d63; padding:20px; border-radius:12px; margin-bottom:20px;">
+            ${texteIA.replace(/\n/g, "<br/>")}
+          </div>
+        </div>
+      `);
         } catch (error) {
             console.error("Erreur analyse:", error);
             setResultat("❌ Erreur pendant l'analyse.");
         }
     };
 
-    // 📄 Export PDF
+    // Export PDF
     const telechargerPDF = async () => {
         const element = pdfRef.current;
         if (!element) {
@@ -164,6 +159,7 @@ Tâches :
 
     return (
         <div style={{ backgroundColor: "#243b55", minHeight: "100vh", padding: 40 }}>
+            {/* Retour */}
             <div style={{ textAlign: "center", marginBottom: 30 }}>
                 <button
                     onClick={() => navigate(-1)}
@@ -175,27 +171,26 @@ Tâches :
                         border: "none",
                         cursor: "pointer",
                         fontWeight: "bold",
-                        boxShadow: "0 4px 8px rgba(233,30,99,0.4)",
                     }}
                 >
                     🔙 Retour à la feuille
                 </button>
             </div>
 
+            {/* Carte principale */}
             <div
                 style={{
-                    background: "#ffffff",
+                    background: "#7392e0",
                     padding: 40,
-                    maxWidth: 750,
+                    maxWidth: 900,
                     margin: "auto",
                     borderRadius: 16,
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
                 }}
             >
                 <h2
                     style={{
                         textAlign: "center",
-                        color: "#1a2a4f",
+                        color: "white",
                         marginBottom: 30,
                         fontWeight: "bold",
                     }}
@@ -217,15 +212,14 @@ Tâches :
                                     padding: "10px",
                                     border: "2px dashed #4fa3f7",
                                     borderRadius: "8px",
-                                    background: "#f9f9fb",
+                                    background: "#fff",
                                     cursor: "pointer",
                                     width: "80%",
                                 }}
                                 onChange={(e) => {
                                     const fileName =
                                         e.target.files[0]?.name || "Aucun fichier choisi";
-                                    document.getElementById(`label${num}`).innerText =
-                                        fileName;
+                                    document.getElementById(`label${num}`).innerText = fileName;
                                 }}
                             />
                             <div
@@ -244,24 +238,17 @@ Tâches :
                 </div>
 
                 {/* Boutons */}
-                <div
-                    style={{
-                        textAlign: "center",
-                        display: "flex",
-                        justifyContent: "center",
-                        gap: "20px",
-                    }}
-                >
+                <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <button
                         onClick={analyserComparaisonIA}
                         style={{
                             background: "#e91e63",
                             color: "white",
                             padding: "12px 24px",
-                            border: "none",
                             borderRadius: "10px",
                             cursor: "pointer",
                             fontWeight: "bold",
+                            marginRight: "15px",
                         }}
                     >
                         🧠 Lancer la comparaison
@@ -269,10 +256,9 @@ Tâches :
                     <button
                         onClick={telechargerPDF}
                         style={{
-                            background: "#4fa3f7",
+                            background: "#1a2a4f",
                             color: "white",
                             padding: "12px 24px",
-                            border: "none",
                             borderRadius: "10px",
                             cursor: "pointer",
                             fontWeight: "bold",
@@ -282,18 +268,18 @@ Tâches :
                     </button>
                 </div>
 
-                {/* Résultat */}
+                {/* Résultats */}
                 <div
                     ref={pdfRef}
                     style={{
-                        marginTop: 30,
-                        background: "#ffffff",
+                        width: "95%",
+                        border: "1px solid #46464dff",
+                        borderRadius: 10,
                         padding: 20,
-                        borderRadius: 12,
-                        border: "2px solid #1a2a4f",
-                        color: "#333",
-                        fontFamily: "Segoe UI",
-                        minHeight: 100,
+                        background: "#fff",
+                        color: "#1a1a1a",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
                     }}
                     dangerouslySetInnerHTML={{ __html: resultat }}
                 />
