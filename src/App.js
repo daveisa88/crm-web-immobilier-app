@@ -11,6 +11,7 @@ import "./App.css";
 // Pages publiques
 import AccueilPage from "./AccueilPage";
 import ManuelPage from "./ManuelPage";
+import ModeEmploi from "./ModeEmploi"; // ✅ ajouté
 import AbonnementPage from "./AbonnementPage";
 import FicheClientPreview from "./FicheClientPreview";
 
@@ -98,6 +99,7 @@ function AppRoutes() {
             <Route path="/" element={<AccueilPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/manuel" element={<ManuelPage />} />
+            <Route path="/mode-emploi" element={<ModeEmploi />} /> {/* ✅ nouvelle route */}
             <Route path="/abonnement" element={<AbonnementPage />} />
             <Route path="/fiche-preview" element={<FicheClientPreview />} />
             <Route path="/paiement" element={<PaiementPage />} />
@@ -204,6 +206,5 @@ function App() {
         </Router>
     );
 }
-
 
 export default App;
