@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { jsPDF } from "jspdf";
-import "./MailTypePage.css"; // 👉 ton CSS externe
-import { Link } from "react-router-dom"; // ✅ importer Link
+import "./MailTypePage.css";
+import { Link } from "react-router-dom";
 
 export default function MailTypePage() {
     const [client, setClient] = useState("");
@@ -11,6 +11,7 @@ export default function MailTypePage() {
     const [heure, setHeure] = useState("10h");
     const [objet, setObjet] = useState("");
     const [corps, setCorps] = useState("");
+    const [signature, setSignature] = useState(""); // <-- Nom / Agence
 
     const modeles = {
         "R0 - Contact": {
@@ -22,7 +23,7 @@ Suite à votre demande concernant le bien situé au {ADRESSE}, je me permets de 
 Je reste à votre disposition pour convenir d’un premier rendez-vous téléphonique ou physique selon vos disponibilités.
 
 Bien cordialement,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
         "R1 - Visite découverte": {
             objet: "Confirmation de la visite – {ADRESSE} le {DATE}",
@@ -35,7 +36,7 @@ Merci de bien vouloir me confirmer votre présence ou de me prévenir en cas d�
 Dans l’attente de notre rencontre, je reste à votre disposition.
 
 Bien à vous,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
         "R2 - Estimation & Mandat": {
             objet: "Estimation du bien et proposition de mandat – {ADRESSE}",
@@ -48,9 +49,9 @@ Nous pourrons échanger ensemble sur cette évaluation et, si vous le souhaitez,
 Je reste à votre disposition pour toute question.
 
 Bien cordialement,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
-        "Commercialisation": {
+        Commercialisation: {
             objet: "Mise en commercialisation – {ADRESSE}",
             corps: `Bonjour {CLIENT},
 
@@ -61,7 +62,7 @@ Nous ne manquerons pas de vous informer régulièrement des retours des acquére
 Merci pour votre confiance.
 
 Bien cordialement,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
         "Qualification acquéreur": {
             objet: "Qualification d’un acquéreur potentiel – {ADRESSE}",
@@ -74,7 +75,7 @@ Nous allons organiser un entretien afin de qualifier son projet et de vérifier 
 Je ne manquerai pas de revenir vers vous avec davantage de détails.
 
 Bien à vous,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
         "Visites organisées": {
             objet: "Organisation des visites – {ADRESSE} le {DATE}",
@@ -87,7 +88,7 @@ Nous mettrons tout en œuvre pour valoriser votre bien et recueillir des retours
 Je vous ferai un compte rendu détaillé à l’issue des visites.
 
 Bien cordialement,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
         "Offre reçue": {
             objet: "Réception d’une offre d’achat – {ADRESSE}",
@@ -98,7 +99,7 @@ Nous avons le plaisir de vous informer qu’une offre d’achat a été reçue p
 Nous reviendrons rapidement vers vous pour en discuter ensemble et analyser les conditions proposées.
 
 Bien à vous,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
         "Compromis signé": {
             objet: "Signature du compromis – {ADRESSE}",
@@ -111,7 +112,7 @@ Nous allons désormais préparer les prochaines étapes administratives en vue d
 Je reste disponible pour toute question.
 
 Bien cordialement,
-[Votre Nom / Agence]`
+[Votre Nom / Agence]`,
         },
         "Acte authentique": {
             objet: "Signature de l’acte authentique – {ADRESSE}",
@@ -124,8 +125,8 @@ Toutes nos félicitations pour la concrétisation de cette vente.
 Merci pour votre confiance tout au long de ce projet.
 
 Bien à vous,
-[Votre Nom / Agence]`
-        }
+[Votre Nom / Agence]`,
+        },
     };
 
     const getFormattedDate = (date) => {
@@ -144,12 +145,21 @@ Bien à vous,
             "{ADRESSE}": adresse,
             "{DATE}": dateStr,
             "{HEURE}": heure,
-            "{TYPE}": typeMail
+            "{TYPE}": typeMail,
         };
 
         for (const token in replacements) {
             objetTpl = objetTpl.replaceAll(token, replacements[token]);
             corpsTpl = corpsTpl.replaceAll(token, replacements[token]);
+        }
+
+        // Remplacement de la signature
+        if (signature.trim()) {
+            const sig = signature.trim();
+            corpsTpl = corpsTpl
+                .replace("[Votre Nom / Agence]", sig)
+                .replace("[Votre Nom/ Agence]", sig)
+                .replace("[Votre Nom/Agence]", sig);
         }
 
         setObjet(objetTpl.trim());
@@ -158,11 +168,8 @@ Bien à vous,
 
     const ouvrirOutlook = () => {
         const subject = objet.trim();
-        let bodyText = corps.trim();
-        bodyText = bodyText.replace(/\n/g, "\r\n");
-        const mailto = `mailto:?subject=${encodeURIComponent(
-            subject
-        )}&body=${encodeURIComponent(bodyText)}`;
+        let bodyText = corps.trim().replace(/\n/g, "\r\n");
+        const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
         window.location.href = mailto;
     };
 
@@ -201,7 +208,7 @@ Bien à vous,
                     borderRadius: "10px",
                     display: "inline-block",
                     background: "#e91e63",
-                    boxShadow: "0 4px 10px rgba(233,30,99,0.4)"
+                    boxShadow: "0 4px 10px rgba(233,30,99,0.4)",
                 }}
             >
                 📧 Générateur de mails - Agent Immobilier
@@ -230,7 +237,7 @@ Bien à vous,
             {/* Cadre principal */}
             <div
                 style={{
-                    background: "#2f3e56", // bleu nuit plus clair
+                    background: "#2f3e56",
                     padding: 40,
                     maxWidth: 1200,
                     margin: "auto",
@@ -240,6 +247,118 @@ Bien à vous,
             >
                 {/* Formulaire client */}
                 <section style={{ marginBottom: 30 }}>
+                    {/* Étape / Date / Heure — rangée alignée */}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "160px 1fr 160px 1fr 160px 1fr",
+                            alignItems: "center",
+                            columnGap: "16px",
+                            rowGap: "12px",
+                            marginBottom: "20px",
+                        }}
+                    >
+                        {/* Étape */}
+                        <label
+                            style={{
+                                background: "#6c757d",
+                                color: "white",
+                                padding: "0 12px",
+                                borderRadius: "6px",
+                                fontWeight: "bold",
+                                height: "42px",
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
+                            🔄 Étape
+                        </label>
+                        <select
+                            value={typeMail}
+                            onChange={(e) => setTypeMail(e.target.value)}
+                            style={{
+                                width: "100%",
+                                height: "42px",
+                                padding: "0 10px",
+                                borderRadius: 8,
+                                border: "1px solid #ccc",
+                                background: "white",
+                                color: "#333",
+                            }}
+                        >
+                            {Object.keys(modeles).map((key) => (
+                                <option key={key}>{key}</option>
+                            ))}
+                        </select>
+
+                        {/* Date */}
+                        <label
+                            style={{
+                                background: "#6c757d",
+                                color: "white",
+                                padding: "0 12px",
+                                borderRadius: "6px",
+                                fontWeight: "bold",
+                                height: "42px",
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
+                            📅 Date
+                        </label>
+                        <input
+                            type="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            style={{
+                                width: "90%",
+                                height: "40px",
+                                padding: "0 8px",
+                                borderRadius: 8,
+                                border: "1px solid #ccc",
+                                background: "white",
+                                color: "#333",
+                            }}
+                        />
+
+                        {/* Heure */}
+                        <label
+                            style={{
+                                background: "#6c757d",
+                                color: "white",
+                                padding: "0 12px",
+                                borderRadius: "6px",
+                                fontWeight: "bold",
+                                height: "44px",
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
+                            ⏰ Heure
+                        </label>
+                        <select
+                            value={heure}
+                            onChange={(e) => setHeure(e.target.value)}
+                            style={{
+                                width: "100%",
+                                height: "42px",
+                                padding: "0 10px",
+                                borderRadius: 8,
+                                border: "1px solid #ccc",
+                                background: "white",
+                                color: "#333",
+                            }}
+                        >
+                            <option>10h</option>
+                            <option>12h</option>
+                            <option>14h</option>
+                            <option>15h30</option>
+                            <option>16h</option>
+                            <option>18h</option>
+                        </select>
+                    </div>
+
+
                     {/* Nom du client */}
                     <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
                         <label style={{ background: "#6c757d", color: "white", padding: "8px 12px", borderRadius: "6px", fontWeight: "bold" }}>
@@ -266,46 +385,18 @@ Bien à vous,
                         />
                     </div>
 
-                    {/* Étape / Date / Heure */}
-                    <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 1fr 1fr", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
+                    {/* Nom / Agence */}
+                    <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
                         <label style={{ background: "#6c757d", color: "white", padding: "8px 12px", borderRadius: "6px", fontWeight: "bold" }}>
-                            🔄 Étape
-                        </label>
-                        <select
-                            value={typeMail}
-                            onChange={(e) => setTypeMail(e.target.value)}
-                            style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #ccc", background: "white", color: "#333" }}
-                        >
-                            {Object.keys(modeles).map((key) => (
-                                <option key={key}>{key}</option>
-                            ))}
-                        </select>
-
-                        <label style={{ background: "#6c757d", color: "white", padding: "8px 10px", borderRadius: "6px", fontWeight: "bold" }}>
-                            📅 Date
+                            🏢 Nom / Agence
                         </label>
                         <input
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            style={{ width: "90%", padding: "10px", borderRadius: 8, border: "1px solid #ccc", background: "white", color: "#333" }}
-                        />
-
-                        <label style={{ background: "#6c757d", color: "white", padding: "8px 12px", borderRadius: "6px", fontWeight: "bold" }}>
-                            ⏰ Heure
-                        </label>
-                        <select
-                            value={heure}
-                            onChange={(e) => setHeure(e.target.value)}
+                            type="text"
+                            value={signature}
+                            onChange={(e) => setSignature(e.target.value)}
+                            placeholder="ex : Jean Dupont / Agence Horizon"
                             style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #ccc", background: "white", color: "#333" }}
-                        >
-                            <option>10h</option>
-                            <option>12h</option>
-                            <option>14h</option>
-                            <option>15h30</option>
-                            <option>16h</option>
-                            <option>18h</option>
-                        </select>
+                        />
                     </div>
 
                     <div style={{ textAlign: "center", marginTop: "25px" }}>
@@ -319,7 +410,7 @@ Bien à vous,
                                 fontWeight: "bold",
                                 border: "none",
                                 cursor: "pointer",
-                                boxShadow: "0 3px 8px rgba(79,163,247,0.4)"
+                                boxShadow: "0 3px 8px rgba(79,163,247,0.4)",
                             }}
                         >
                             📧 Générer le mail
@@ -344,7 +435,7 @@ Bien à vous,
                                 border: "1px solid #ccc",
                                 background: "white",
                                 color: "#333",
-                                minHeight: "60px"
+                                minHeight: "60px",
                             }}
                         />
                     </div>
@@ -364,7 +455,7 @@ Bien à vous,
                                 border: "1px solid #ccc",
                                 background: "white",
                                 color: "#333",
-                                minHeight: "120px"
+                                minHeight: "120px",
                             }}
                         />
                     </div>
@@ -380,7 +471,7 @@ Bien à vous,
                                 fontWeight: "bold",
                                 border: "none",
                                 cursor: "pointer",
-                                boxShadow: "0 3px 8px rgba(26,42,79,0.4)"
+                                boxShadow: "0 3px 8px rgba(26,42,79,0.4)",
                             }}
                         >
                             📤 Ouvrir dans Outlook
@@ -395,7 +486,7 @@ Bien à vous,
                                 fontWeight: "bold",
                                 border: "none",
                                 cursor: "pointer",
-                                boxShadow: "0 3px 8px rgba(233,30,99,0.4)"
+                                boxShadow: "0 3px 8px rgba(233,30,99,0.4)",
                             }}
                         >
                             📄 Exporter PDF
@@ -405,7 +496,4 @@ Bien à vous,
             </div>
         </div>
     );
-
-
-
 }

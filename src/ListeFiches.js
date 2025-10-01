@@ -48,7 +48,7 @@ function ListeFiches() {
 
             <h2 style={{
                 textAlign: 'center',
-                color: '#d819b8ff',
+                color: '##f8faf5',
                 marginBottom: '30px'
             }}>📁 Liste des fiches enregistrées</h2>
 
@@ -111,13 +111,26 @@ function ListeFiches() {
                             </button>
                         </div>
 
-                        <div style={{ marginTop: "10px", lineHeight: "1.6" }}>
+                        <div style={{ marginTop: "10px", lineHeight: "1.6", overflowWrap: "anywhere" }}>
                             👤 <strong>Client :</strong> {fiche.client}<br />
                             🏠 <strong>Adresse :</strong> {fiche.adresse}<br />
                             🔗 <strong>Annonce :</strong>{" "}
-                            <a href={fiche.annonceCollee} target="_blank" rel="noopener noreferrer" style={{ color: "#0078d4" }}>
+                            <a
+                                href={fiche.annonceCollee}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    color: "#0078d4",
+                                    display: "inline-block",
+                                    maxWidth: "100%",
+                                    overflowWrap: "anywhere",  // coupe où nécessaire
+                                    wordBreak: "break-word",    // fallback
+                                }}
+                                title={fiche.annonceCollee}   // tooltip complet
+                            >
                                 {fiche.annonceCollee}
                             </a><br />
+
                             📝 <strong>Notes :</strong> {fiche.notes}<br />
                             🔄 <strong>Étape :</strong> <span className={`etape-${fiche.etape?.toLowerCase()}`}>{fiche.etape}</span><br />
                             📌 <strong>Statut :</strong> <span className={`statut-${fiche.statut?.toLowerCase()}`}>{fiche.statut}</span><br />

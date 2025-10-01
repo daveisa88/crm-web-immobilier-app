@@ -195,7 +195,7 @@ Ensuite :
                         fontWeight: "bold",
                     }}
                 >
-                    📊 Comparateur PDF IA
+                    📊 Comparateur Annonce PDF IA
                 </h2>
 
                 {/* Upload */}
@@ -210,32 +210,26 @@ Ensuite :
                                     margin: "12px auto",
                                     display: "block",
                                     padding: "10px",
-                                    border: "2px dashed #4fa3f7",
+                                    border: "1px solid #1a1a1a",   // cadre fin noir
                                     borderRadius: "8px",
                                     background: "#fff",
                                     cursor: "pointer",
                                     width: "80%",
+                                    color: "#1a2a4f",              // texte (nom du fichier) plus foncé
+                                    fontWeight: 600,               // plus lisible
                                 }}
                                 onChange={(e) => {
-                                    const fileName =
-                                        e.target.files[0]?.name || "Aucun fichier choisi";
-                                    document.getElementById(`label${num}`).innerText = fileName;
+                                    // (optionnel) titre en tooltip
+                                    const f = e.target.files?.[0]?.name || "";
+                                    e.target.title = f || "Choisir un fichier PDF";
                                 }}
                             />
-                            <div
-                                id={`label${num}`}
-                                style={{
-                                    marginTop: "5px",
-                                    fontSize: "14px",
-                                    color: "#1a2a4f",
-                                    fontWeight: "bold",
-                                }}
-                            >
-                                Aucun fichier choisi
-                            </div>
+                            {/* ⛔️ On supprime le div qui doublait le nom du fichier */}
                         </div>
                     ))}
                 </div>
+
+
 
                 {/* Boutons */}
                 <div style={{ textAlign: "center", marginBottom: 20 }}>

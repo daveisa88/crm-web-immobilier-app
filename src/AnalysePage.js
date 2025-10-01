@@ -214,13 +214,17 @@ ${texte}
             >
                 {/* Champ annonce */}
                 <div style={{ marginBottom: 20, textAlign: "center" }}>
-                    <label style={{ fontWeight: "bold", color: "#1a2a4f" }}>
+                    <label style={{ fontWeight: "bold", color: "#1a2a4f", display: "block" }}>
                         📎 Lien de l'annonce
                     </label>
+                    <div style={{ fontSize: 12, color: "#0a0000", marginTop: 4, marginBottom: 8 }}>
+                        Collez uniquement l’URL complète de l’annonce (ex. https://...).
+                    </div>
                     <textarea
                         rows={2}
                         value={annonce}
                         onChange={(e) => setAnnonce(e.target.value)}
+                        placeholder="Collez ici le lien de l’annonce…"
                         style={{
                             width: "100%",
                             padding: "10px",
@@ -232,25 +236,32 @@ ${texte}
                     />
                 </div>
 
+
                 {/* Champ HTML */}
-                <div style={{ marginBottom: 20, textAlign: "center" }}>
-                    <label style={{ fontWeight: "bold", color: "#1a2a4f" }}>
-                        🛠️ Code HTML (optionnel)
-                    </label>
-                    <textarea
-                        rows={6}
-                        value={htmlFallback}
-                        onChange={(e) => setHtmlFallback(e.target.value)}
-                        style={{
-                            width: "100%",
-                            padding: "10px",
-                            borderRadius: 8,
-                            border: "1px solid #46464dff",
-                            background: "#fff",
-                            color: "#444",
-                        }}
-                    />
-                </div>
+<div style={{ marginBottom: 20, textAlign: "center" }}>
+  <label style={{ fontWeight: "bold", color: "#1a2a4f", display: "block" }}>
+    🛠️ Code HTML
+  </label>
+                    <div style={{ fontSize: 12, color: "#0a0000", marginTop: 4, marginBottom: 8 }}>
+    Ouvrez l’annonce dans votre navigateur → <b>clic droit</b> → <b>Afficher le code source</b> (ou « View page source »),
+    puis <b>copiez-collez ici</b> tout le code.
+  </div>
+  <textarea
+    rows={6}
+    value={htmlFallback}
+    onChange={(e) => setHtmlFallback(e.target.value)}
+    placeholder="Collez ici le code source HTML de la page de l’annonce…"
+    style={{
+      width: "100%",
+      padding: "10px",
+      borderRadius: 8,
+      border: "1px solid #46464dff",
+      background: "#fff",
+      color: "#444",
+    }}
+  />
+</div>
+
 
                 {/* Boutons */}
                 <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>

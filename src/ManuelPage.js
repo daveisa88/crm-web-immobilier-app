@@ -159,96 +159,108 @@ export default function ManuelPage() {
      ];
 
     return (
-        <div style={{ padding: '30px', backgroundColor: '#243b55', minHeight: '100vh', fontFamily: 'Segoe UI, sans-serif' }}>
+        <div style={{ padding: "30px", backgroundColor: "#243b55", minHeight: "100vh", fontFamily: "Segoe UI, sans-serif" }}>
 
-            {/* Titre principal */}
+            {/* Titre principal (plus petit) */}
             <h1
                 style={{
-                    textAlign: 'center',
-                    fontSize: '30px',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    marginBottom: '20px',
-                    padding: '15px 25px',
-                    border: '2px solid #e91e63',
-                    borderRadius: '10px',
-                    display: 'inline-block',
-                    background: '#e91e63',
-                    boxShadow: '0 4px 10px rgba(233,30,99,0.4)'
+                    textAlign: "center",
+                    fontSize: "22px",
+                    fontWeight: "bold",
+                    color: "white",
+                    marginBottom: "16px",
+                    padding: "10px 16px",
+                    border: "2px solid #e91e63",
+                    borderRadius: "10px",
+                    display: "inline-block",
+                    background: "#e91e63",
+                    boxShadow: "0 3px 8px rgba(233,30,99,0.35)",
                 }}
             >
-                🧰 Boîte à outils - Agent Immobilier augmenté
+                🧰 Boîte à outils - Tout les liens utile pour faire une bonne vente 
             </h1>
 
             {/* Retour placé en dessous du titre */}
-            <div style={{ textAlign: "center", marginBottom: "40px" }}>
+            <div style={{ textAlign: "center", marginBottom: "28px" }}>
                 <button
                     onClick={() => navigate(-1)}
                     style={{
-                        backgroundColor: '#e91e63',
-                        color: '#ffffff',
-                        padding: '10px 18px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        boxShadow: '0 3px 8px rgba(233,30,99,0.4)'
+                        backgroundColor: "#e91e63",
+                        color: "#ffffff",
+                        padding: "8px 14px",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        boxShadow: "0 3px 8px rgba(233,30,99,0.35)",
                     }}
                 >
                     🔙 Retour à la feuille
                 </button>
             </div>
 
-            {sections.map((section, idx) => (
-                <div
-                    key={idx}
-                    style={{
-                        backgroundColor: '#f0f6ff',
-                        borderLeft: '6px solid #1a2a4f',
-                        border: '1px solid #d0d8e6',
-                        boxShadow: '0 3px 8px rgba(0, 0, 0, 0.12)',
-                        padding: '25px 30px',
-                        margin: '30px auto',
-                        maxWidth: '1000px',
-                        borderRadius: '12px'
-                    }}
-                >
-                    <h2
+            {/* GRILLE DES SECTIONS EN 2 COLONNES, LARGEUR ÉTENDUE */}
+            <div
+                style={{
+                    maxWidth: "1400px",
+                    margin: "0 auto",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: "24px",
+                }}
+            >
+                {sections.map((section, idx) => (
+                    <div
+                        key={idx}
                         style={{
-                            color: '#1a2a4f',
-                            marginBottom: '20px',
-                            fontSize: '22px',
-                            fontWeight: '600'
+                            backgroundColor: "#f0f6ff",
+                            borderLeft: "6px solid #1a2a4f",
+                            border: "1px solid #d0d8e6",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                            padding: "18px 20px",
+                            borderRadius: "12px",
                         }}
                     >
-                        {section.title}
-                    </h2>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                        {section.links.map((link, i) => (
-                            <a
-                                key={i}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    backgroundColor: '#4fa3f7',
-                                    color: 'white',
-                                    padding: '12px 22px',
-                                    borderRadius: '8px',
-                                    textDecoration: 'none',
-                                    fontWeight: '500',
-                                    boxShadow: '0 3px 6px rgba(79,163,247,0.4)',
-                                    transition: 'all 0.2s ease-in-out'
-                                }}
-                                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#1a2a4f')}
-                                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#4fa3f7')}
-                            >
-                                {link.text}
-                            </a>
-                        ))}
+                        <h2
+                            style={{
+                                color: "#1a2a4f",
+                                marginBottom: "12px",
+                                fontSize: "18px",
+                                fontWeight: 600,
+                            }}
+                        >
+                            {section.title}
+                        </h2>
+
+                        {/* Boutons plus petits, alignés à gauche */}
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "flex-start" }}>
+                            {section.links.map((link, i) => (
+                                <a
+                                    key={i}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        backgroundColor: "#4fa3f7",
+                                        color: "white",
+                                        padding: "8px 12px",
+                                        borderRadius: "8px",
+                                        textDecoration: "none",
+                                        fontWeight: 500,
+                                        fontSize: "14px",
+                                        boxShadow: "0 2px 4px rgba(79,163,247,0.35)",
+                                        transition: "all 0.15s ease-in-out",
+                                    }}
+                                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#1a2a4f")}
+                                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#4fa3f7")}
+                                >
+                                    {link.text}
+                                </a>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 
