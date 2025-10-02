@@ -81,14 +81,9 @@ export default function FeuilleForm() {
         window.location.href = `${process.env.PUBLIC_URL}/MailType.html?client=${client}&adresse=${adresse}`;
     };
 
-
-
-
-
-
     // ✅ Enregistrement fiche + upload fichiers
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         const files = document.querySelector('input[type="file"]').files;
 
         try {
@@ -193,277 +188,156 @@ export default function FeuilleForm() {
                 </button>
             </div>
 
-            {/* Formulaire */}
-            <form
-                onSubmit={handleSubmit}
+            {/* Conteneur principal */}
+            <div
                 style={{
-                    background: "#7392e0ff", // bleu ciel plus foncé
-                    padding: "35px",
-                    borderRadius: "20px",
-                    boxShadow: "0 6px 5px rgba(0,0,0,0.2)",
-                    width: "100%",
-                    maxWidth: "1400px",
+                    display: "grid",
+                    gridTemplateColumns: "2fr 300px",
+                    gap: "100px",
+                    maxWidth: "1600px",
                     margin: "auto",
+                    alignItems: "start",
                 }}
             >
-                <h2
+                {/* Colonne gauche : Formulaire */}
+                <form
                     style={{
-                        textAlign: "center",
-                        marginBottom: "40px",
-                        color: "white",            // écriture blanche pour contraste
-                        fontSize: "20px",          // plus gros
-                        fontWeight: "bold",
-                        padding: "15px 25px",
-                        border: "2px solid #e91e63", // bordure rose
-                        borderRadius: "10px",
-                        display: "inline-block",
-                        background: "#e91e63",     // fond rose
-                        boxShadow: "0 4px 8px rgba(233,30,99,0.3)" // ombre rose douce
+                        background: "#7392e0ff",
+                        padding: "40px",
+                        borderRadius: "2px",
+                        boxShadow: "0 2px 2px rgba(0,0,0,0.2)",
+                        marginTop: "-80px",
+                        width: "90%",
                     }}
                 >
-                    📄 Fiche Client Immobilier
-                </h2>
+                    <h2
+                        style={{
+                            textAlign: "center",
+                            marginBottom: "40px",
+                            color: "white",
+                            fontSize: "15px",
+                            fontWeight: "bold",
+                            padding: "15px 25px",
+                            border: "2px solid #e91e63",
+                            borderRadius: "5px",
+                            display: "inline-block",
+                            background: "#e91e63",
+                            boxShadow: "0 2px 8px rgba(233,30,99,0.3)"
+                        }}
+                    >
+                        📄 Fiche Client Immobilier
+                    </h2>
 
+                    {/* Grille labels/champs */}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "160px 1fr",
+                            gap: "18px 35px",
+                            alignItems: "center",
+                        }}
+                    >
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📄 Numéro contrat</label>
+                        <input
+                            name="numeroContrat"
+                            value={formData.numeroContrat ?? ""}
+                            readOnly
+                            placeholder="Numéro automatique à l’enregistrement"
+                            className="ph-muted"
+                            style={{
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #bfcde6",
+                                width: "100%",
+                                background: "white",
+                                color: "#5a6475",
+                            }}
+                        />
 
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>👤 Nom du client</label>
+                        <input name="client" value={formData.client} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
 
-                {/* Grille labels/champs */}
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>🏠 Adresse du bien</label>
+                        <input name="adresse" value={formData.adresse} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
+
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📋 Annonce web</label>
+                        <textarea name="annonceCollee" value={formData.annonceCollee} onChange={handleChange} rows="3" style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
+
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📅 Date RDV</label>
+                        <input type="date" name="dateRDV" value={formData.dateRDV} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
+
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📝 Notes</label>
+                        <textarea name="notes" value={formData.notes} onChange={handleChange} rows="3" style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
+
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📑 Documents</label>
+                        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
+
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>🔄 Étape</label>
+                        <select name="etape" value={formData.etape} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }}>
+                            <option value="">Sélectionner</option>
+                            <option>R0 - Contact</option>
+                            <option>R1 - Visite découverte</option>
+                            <option>R2 - Estimation & Mandat</option>
+                            <option>Commercialisation</option>
+                            <option>Qualification acquéreur</option>
+                            <option>Visites organisées</option>
+                            <option>Offre reçue</option>
+                            <option>Compromis signé</option>
+                            <option>Acte authentique</option>
+                        </select>
+
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📌 Statut</label>
+                        <select name="statut" value={formData.statut} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }}>
+                            <option value="">Sélectionner</option>
+                            <option>À faire</option>
+                            <option>En cours</option>
+                            <option>Fait</option>
+                        </select>
+                    </div>
+                </form>
+
+                {/* Colonne droite : Boutons */}
                 <div
                     style={{
-                        display: "grid",
-                        gridTemplateColumns: "200px 2fr",
-                        gap: "15px 40px",
-                        alignItems: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "15px",
+                        background: "#7392e0ff",
+                        padding: "25px",
+                        borderRadius: "15px",
+                        boxShadow: "0 6px 12px rgba(0,0,0,0.25)",
+                        width: "100%",
+                        maxWidth: "320px",
+                        alignSelf: "center",
                     }}
                 >
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        📄 Numéro contrat
-                    </label>
-                    <input
-                        name="numeroContrat"
-                        value={formData.numeroContrat}
-                        readOnly
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    />
+                    <button onClick={() => openPage("/manuel")} style={{ background: "#1a2a4f", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📘 Manuel</button>
+                    <button onClick={() => window.open("https://outlook.office.com/calendar/", "_blank")} style={{ background: "#1a2a4f", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📆 Outlook</button>
+                    <button onClick={() => window.open("https://teams.microsoft.com/", "_blank")} style={{ background: "#1a2a4f", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>🟪 Teams</button>
+                    <button onClick={() => openPage("/analyse")} style={{ background: "#e91e63", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>🤖 Analyse IA</button>
+                    <button onClick={() => openPage("/comparateur")} style={{ background: "#e91e63", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📊 Comparer annonces</button>
+                    <button onClick={() => navigate(`/mailtype?client=${encodeURIComponent(formData.client)}&adresse=${encodeURIComponent(formData.adresse)}`)} style={{ background: "#e91e63", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📧 Mail Type</button>
+                    <button onClick={() => openPage("/Feuille/Liste")} style={{ background: "#3f6628", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📁 Voir toutes les fiches</button>
 
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        👤 Nom du client
-                    </label>
-                    <input
-                        name="client"
-                        value={formData.client}
-                        onChange={handleChange}
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    />
-
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        🏠 Adresse du bien
-                    </label>
-                    <input
-                        name="adresse"
-                        value={formData.adresse}
-                        onChange={handleChange}
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    />
-
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        📋 Annonce web
-                    </label>
-                    <textarea
-                        name="annonceCollee"
-                        value={formData.annonceCollee}
-                        onChange={handleChange}
-                        rows="3"
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    />
-
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        📅 Date RDV
-                    </label>
-                    <input
-                        type="date"
-                        name="dateRDV"
-                        value={formData.dateRDV}
-                        onChange={handleChange}
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    />
-
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        📝 Notes
-                    </label>
-                    <textarea
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleChange}
-                        rows="3"
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    />
-
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        📑 Documents
-                    </label>
-                    <input
-                        type="file"
-                        multiple
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        style={{
-                            padding: "8px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    />
-
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        🔄 Étape
-                    </label>
-                    <select
-                        name="etape"
-                        value={formData.etape}
-                        onChange={handleChange}
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    >
-                        <option value="">Sélectionner</option>
-                        <option>R0 - Contact</option>
-                        <option>R1 - Visite découverte</option>
-                        <option>R2 - Estimation & Mandat</option>
-                        <option>Commercialisation</option>
-                        <option>Qualification acquéreur</option>
-                        <option>Visites organisées</option>
-                        <option>Offre reçue</option>
-                        <option>Compromis signé</option>
-                        <option>Acte authentique</option>
-                    </select>
-
-                    <label style={{ background: "#444", color: "white", padding: "6px 12px", borderRadius: "6px" }}>
-                        📌 Statut
-                    </label>
-                    <select
-                        name="statut"
-                        value={formData.statut}
-                        onChange={handleChange}
-                        style={{
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #bfcde6",
-                            width: "100%",
-                            background: "white",
-                            color: "#5a6475",
-                        }}
-                    >
-                        <option value="">Sélectionner</option>
-                        <option>À faire</option>
-                        <option>En cours</option>
-                        <option>Fait</option>
-                    </select>
-                </div>
-
-                {/* Bouton Enregistrer */}
-                <div style={{ textAlign: "right", marginTop: "25px" }}>
+                    {/* ✅ Bouton qui appelle directement handleSubmit */}
                     <button
-                        type="submit"
+                        onClick={handleSubmit}
                         style={{
-                            background: "#1a2a4f",
+                            background: "#3f6628",
                             color: "white",
-                            padding: "12px 24px",
+                            padding: "14px",
                             border: "none",
                             borderRadius: "10px",
                             fontWeight: "bold",
                             cursor: "pointer",
-                            minWidth: "250px",
-                            boxShadow: "0 4px 10px rgba(26,42,79,0.3)",
+                            marginTop: "25px",
+                            boxShadow: "0 4px 12px rgba(26,42,79,0.4)",
                         }}
                     >
                         💾 Enregistrer la fiche client
                     </button>
                 </div>
-            </form>
-
-            {/* Barre de boutons */}
-            <div
-                style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "12px",
-                    justifyContent: "flex-end",
-                    maxWidth: "1200px",
-                    margin: "30px auto",
-                }}
-            >
-                <button onClick={() => openPage("/manuel")} style={{ background: "#4fa3f7", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}>📘 Manuel</button>
-                <button onClick={() => openPage("/analyse")} style={{ background: "#e91e63", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}>🤖 Analyse IA</button>
-                <button onClick={() => window.open("https://outlook.office.com/calendar/", "_blank")} style={{ background: "#4fa3f7", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}>📆 Outlook</button>
-                <button onClick={() => window.open("https://teams.microsoft.com/", "_blank")} style={{ background: "#1a2a4f", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}>🟪 Teams</button>
-                <button onClick={() => window.print()} style={{ background: "#4fa3f7", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}>🖨️ Imprimer</button>
-                <button onClick={() => openPage("/comparateur")} style={{ background: "#4fa3f7", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}>📊 Comparer annonces</button>
-                <button
-                    onClick={() =>
-                        navigate(`/mailtype?client=${encodeURIComponent(formData.client)}&adresse=${encodeURIComponent(formData.adresse)}`)
-                    }
-                    style={{ background: "#e91e63", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}
-                >
-                    📧 Mail Type
-                </button>
-                <button onClick={() => openPage("/Feuille/Liste")} style={{ background: "#4fa3f7", color: "white", padding: "10px 20px", border: "none", borderRadius: "8px", cursor: "pointer" }}>
-                    📁 Voir toutes les fiches
-                </button>
             </div>
         </div>
     );
-
-
-
-
-
-
 }
