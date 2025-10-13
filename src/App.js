@@ -11,7 +11,7 @@ import "./App.css";
 // Pages publiques
 import AccueilPage from "./AccueilPage";
 import ManuelPage from "./ManuelPage";
-import ModeEmploi from "./ModeEmploi"; // ✅ ajouté
+import ModeEmploi from "./ModeEmploi";
 import AbonnementPage from "./AbonnementPage";
 import FicheClientPreview from "./FicheClientPreview";
 
@@ -23,6 +23,8 @@ import ComparateurPage from "./ComparateurPage";
 import AnalysePage from "./AnalysePage";
 import MailTypePage from "./MailTypePage";
 import PaiementPage from "./PaiementPage";
+import StatsPage from "./StatsPage"; // ✅ page stats
+import AddFakeData from "./AddFakeData"; // ✅ page import de fiches
 
 // Firebase
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -99,7 +101,7 @@ function AppRoutes() {
             <Route path="/" element={<AccueilPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/manuel" element={<ManuelPage />} />
-            <Route path="/mode-emploi" element={<ModeEmploi />} /> {/* ✅ nouvelle route */}
+            <Route path="/mode-emploi" element={<ModeEmploi />} />
             <Route path="/abonnement" element={<AbonnementPage />} />
             <Route path="/fiche-preview" element={<FicheClientPreview />} />
             <Route path="/paiement" element={<PaiementPage />} />
@@ -145,6 +147,17 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/stats"
+                element={
+                    <ProtectedRoute>
+                        <StatsPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* ✅ Route spéciale : import automatique de 15 fiches de test */}
+            <Route path="/add-fake-data" element={<AddFakeData />} />
 
             {/* Redirection fallback */}
             <Route path="*" element={<Navigate to="/" />} />
@@ -172,7 +185,6 @@ function App() {
         };
     }, []);
 
-    // Pages où on masque le header
     const hideHeader =
         currentPath === "#/" || currentPath.startsWith("#/abonnement");
 
@@ -193,7 +205,7 @@ function App() {
                         <img
                             src="https://i.imgur.com/mvMKs9J.png"
                             alt="Logo MJ"
-                            style={{ width: "80px", marginRight: "16px" }} // ✅ plus grand
+                            style={{ width: "80px", marginRight: "16px" }}
                         />
                         <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>
                             CRM Immobilier – Agent Mandataire

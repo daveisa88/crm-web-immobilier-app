@@ -1,4 +1,3 @@
-// src/FeuilleForm.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "./firebase";
@@ -7,17 +6,19 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth, signOut } from "firebase/auth";
 
 export default function FeuilleForm() {
-    console.log("✅ Composant FeuilleForm monté");
     const navigate = useNavigate();
+    const storage = getStorage();
+    const isElectron = !!window.electronAPI;
+
     const [formData, setFormData] = useState({
-        numeroContrat: '',
-        adresse: '',
-        annonceCollee: '',
-        client: '',
-        notes: '',
-        etape: '',
-        dateRDV: '',
-        statut: '',
+        numeroContrat: "",
+        adresse: "",
+        annonceCollee: "",
+        client: "",
+        notes: "",
+        etape: "",
+        dateRDV: "",
+        statut: "",
     });
 
     const handleChange = (e) => {
@@ -25,6 +26,7 @@ export default function FeuilleForm() {
         setFormData({ ...formData, [name]: value });
     };
 
+    // ✅ Chargement fiche sélectionnée depuis la liste
     useEffect(() => {
         const fiche = localStorage.getItem("ficheSelectionnee");
         if (fiche) {
@@ -33,36 +35,33 @@ export default function FeuilleForm() {
         }
     }, []);
 
+    // ✅ Coloration dynamique Étape / Statut
     useEffect(() => {
         const etapeEl = document.querySelector('select[name="etape"]');
         const statutEl = document.querySelector('select[name="statut"]');
 
         if (etapeEl) {
-            etapeEl.className = 'form-control';
+            etapeEl.className = "form-control";
             const val = formData.etape.toLowerCase();
-            if (val.includes('contact')) etapeEl.classList.add('etape-contact');
-            else if (val.includes('visite d')) etapeEl.classList.add('etape-visite');
-            else if (val.includes('estimation')) etapeEl.classList.add('etape-estimation');
-            else if (val.includes('commercialisation')) etapeEl.classList.add('etape-commercial');
-            else if (val.includes('qualification')) etapeEl.classList.add('etape-qualification');
-            else if (val.includes('visites organis')) etapeEl.classList.add('etape-visites');
-            else if (val.includes('offre')) etapeEl.classList.add('etape-offre');
-            else if (val.includes('compromis')) etapeEl.classList.add('etape-compromis');
-            else if (val.includes('acte')) etapeEl.classList.add('etape-acte');
+            if (val.includes("contact")) etapeEl.classList.add("etape-contact");
+            else if (val.includes("visite")) etapeEl.classList.add("etape-visite");
+            else if (val.includes("estimation")) etapeEl.classList.add("etape-estimation");
+            else if (val.includes("commercialisation")) etapeEl.classList.add("etape-commercial");
+            else if (val.includes("qualification")) etapeEl.classList.add("etape-qualification");
+            else if (val.includes("offre")) etapeEl.classList.add("etape-offre");
+            else if (val.includes("compromis")) etapeEl.classList.add("etape-compromis");
+            else if (val.includes("acte")) etapeEl.classList.add("etape-acte");
         }
 
         if (statutEl) {
-            statutEl.className = 'form-control';
-            if (formData.statut === 'À faire') statutEl.classList.add('statut-afaire');
-            else if (formData.statut === 'En cours') statutEl.classList.add('statut-encours');
-            else if (formData.statut === 'Fait') statutEl.classList.add('statut-fait');
+            statutEl.className = "form-control";
+            if (formData.statut === "À faire") statutEl.classList.add("statut-afaire");
+            else if (formData.statut === "En cours") statutEl.classList.add("statut-encours");
+            else if (formData.statut === "Fait") statutEl.classList.add("statut-fait");
         }
     }, [formData.etape, formData.statut]);
 
-    const storage = getStorage();
-    const isElectron = !!window.electronAPI; // 🔎 Détection de l’environnement
-
-    // ✅ Déconnexion utilisateur
+    // ✅ Déconnexion
     const handleLogout = () => {
         const auth = getAuth();
         signOut(auth)
@@ -70,97 +69,122 @@ export default function FeuilleForm() {
             .catch(() => alert("❌ Erreur lors de la déconnexion"));
     };
 
-    // ✅ Navigation interne
-    const openPage = (path) => {
-        navigate(path);
-    };
+    const openPage = (path) => navigate(path);
 
-    const openMailType = () => {
-        const client = encodeURIComponent(formData.client || "");
-        const adresse = encodeURIComponent(formData.adresse || "");
-        window.location.href = `${process.env.PUBLIC_URL}/MailType.html?client=${client}&adresse=${adresse}`;
-    };
-
-    // ✅ Enregistrement fiche + upload fichiers
-    const handleSubmit = async (e) => {
-        if (e) e.preventDefault();
-        const files = document.querySelector('input[type="file"]').files;
-
+    // 🆕 Créer une nouvelle fiche avec numéro unique
+    const handleNewFiche = async () => {
         try {
             const today = new Date();
             const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+
             const snapshot = await getDocs(collection(db, "fiches"));
-            const countToday = snapshot.docs.filter(doc =>
-                doc.data().dateCreation?.startsWith(today.toISOString().slice(0, 10))
-            ).length;
+            const fiches = snapshot.docs.map((d) => d.data());
 
-            const numeroAuto = `FICHE-${dateStr}-${String(countToday + 1).padStart(3, "0")}`;
-            const uploadedUrls = [];
+            // 🔢 Récupère le plus grand index pour la date du jour
+            const todayFiches = fiches.filter((f) =>
+                (f.dateCreation || "").startsWith(today.toISOString().slice(0, 10))
+            );
 
-            console.log("📂 Nombre de fichiers sélectionnés :", files.length);
+            const maxIndex = todayFiches
+                .map((f) => {
+                    const num = f.numeroContrat?.split("-").pop();
+                    return num ? parseInt(num, 10) : 0;
+                })
+                .reduce((a, b) => Math.max(a, b), 0);
 
+            const newIndex = String(maxIndex + 1).padStart(3, "0");
+            const numeroAuto = `FICHE-${dateStr}-${newIndex}`;
+
+            setFormData({
+                numeroContrat: numeroAuto,
+                adresse: "",
+                annonceCollee: "",
+                client: "",
+                notes: "",
+                etape: "",
+                dateRDV: "",
+                statut: "",
+            });
+
+            alert(`🆕 Nouvelle fiche préparée : ${numeroAuto}`);
+        } catch (error) {
+            alert("❌ Erreur création : " + error.message);
+        }
+    };
+
+    // 💾 Enregistrement ou mise à jour
+    const handleSubmit = async (e) => {
+        if (e) e.preventDefault();
+        const files = document.querySelector('input[type="file"]').files;
+        const uploadedUrls = [];
+
+        try {
+            let numero = formData.numeroContrat;
+
+            // 🔸 Si aucun numéro => on en génère un nouveau
+            if (!numero) {
+                const today = new Date();
+                const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+                const snapshot = await getDocs(collection(db, "fiches"));
+                const fiches = snapshot.docs.map((d) => d.data());
+
+                const todayFiches = fiches.filter((f) =>
+                    (f.dateCreation || "").startsWith(today.toISOString().slice(0, 10))
+                );
+
+                const maxIndex = todayFiches
+                    .map((f) => {
+                        const num = f.numeroContrat?.split("-").pop();
+                        return num ? parseInt(num, 10) : 0;
+                    })
+                    .reduce((a, b) => Math.max(a, b), 0);
+
+                const newIndex = String(maxIndex + 1).padStart(3, "0");
+                numero = `FICHE-${dateStr}-${newIndex}`;
+            }
+
+            // 📎 Upload fichiers
             if (files.length > 0) {
                 for (let file of files) {
-                    console.log("isElectron ?", isElectron);
-                    console.log("📄 Fichier détecté :", file);
-
                     if (isElectron && window.electronAPI?.uploadFichierFirebase) {
-                        console.log("➡️ Mode Electron - envoi via preload :", file.path);
-
                         const result = await window.electronAPI.uploadFichierFirebase(
                             file.path,
-                            `${numeroAuto}/${file.name}`
+                            `${numero}/${file.name}`
                         );
-
-                        console.log("📬 Retour Electron :", result);
-
-                        if (result.success) {
-                            uploadedUrls.push({ name: file.name, url: result.url });
-                        } else {
-                            console.error("❌ Erreur upload Electron :", result.error);
-                        }
+                        if (result.success) uploadedUrls.push({ name: file.name, url: result.url });
                     } else {
-                        console.log("➡️ Mode Web - tentative upload Firebase :", file.name);
-
-                        const storageRef = ref(storage, `${numeroAuto}/${file.name}`);
+                        const storageRef = ref(storage, `${numero}/${file.name}`);
                         await uploadBytes(storageRef, file);
                         const url = await getDownloadURL(storageRef);
-
-                        console.log("✅ Upload Web réussi :", url);
-
                         uploadedUrls.push({ name: file.name, url });
                     }
                 }
-            } else {
-                console.log("ℹ️ Aucun fichier joint → enregistrement de la fiche sans fichiers.");
             }
 
-            await setDoc(doc(db, "fiches", numeroAuto), {
-                ...formData,
-                numeroContrat: numeroAuto,
-                fichiers: uploadedUrls,
-                dateCreation: today.toISOString()
-            });
+            // 🗂️ Enregistrement Firestore
+            await setDoc(
+                doc(db, "fiches", numero),
+                {
+                    ...formData,
+                    numeroContrat: numero,
+                    fichiers: uploadedUrls,
+                    dateCreation: formData.dateCreation || new Date().toISOString(),
+                },
+                { merge: true } // ✅ évite la recréation et conserve le même numéro
+            );
 
-            console.log("📄 Fiche enregistrée dans Firestore :", {
-                ...formData,
-                numeroContrat: numeroAuto,
-                fichiers: uploadedUrls
-            });
-
-            alert(`✅ Fiche enregistrée avec le numéro : ${numeroAuto}`);
+            alert(`✅ Fiche ${numero} enregistrée avec succès !`);
 
             setFormData({
-                numeroContrat: '',
-                adresse: '',
-                annonceCollee: '',
-                client: '',
-                notes: '',
-                etape: '',
-                dateRDV: '',
-                statut: '',
+                numeroContrat: numero,
+                adresse: "",
+                annonceCollee: "",
+                client: "",
+                notes: "",
+                etape: "",
+                dateRDV: "",
+                statut: "",
             });
-
         } catch (error) {
             console.error("❌ Erreur handleSubmit :", error);
             alert("❌ Une erreur est survenue : " + error.message);
@@ -169,7 +193,7 @@ export default function FeuilleForm() {
 
     return (
         <div style={{ backgroundColor: "#243b55", minHeight: "100vh", padding: "30px" }}>
-            {/* Déconnexion */}
+            {/* 🔓 Déconnexion */}
             <div style={{ textAlign: "right", marginBottom: "20px" }}>
                 <button
                     onClick={handleLogout}
@@ -188,7 +212,6 @@ export default function FeuilleForm() {
                 </button>
             </div>
 
-            {/* Conteneur principal */}
             <div
                 style={{
                     display: "grid",
@@ -199,8 +222,9 @@ export default function FeuilleForm() {
                     alignItems: "start",
                 }}
             >
-                {/* Colonne gauche : Formulaire */}
+                {/* FORMULAIRE CLIENT */}
                 <form
+                    onSubmit={handleSubmit}
                     style={{
                         background: "#7392e0ff",
                         padding: "40px",
@@ -220,15 +244,15 @@ export default function FeuilleForm() {
                             padding: "15px 25px",
                             border: "2px solid #e91e63",
                             borderRadius: "5px",
-                            display: "inline-block",
                             background: "#e91e63",
-                            boxShadow: "0 2px 8px rgba(233,30,99,0.3)"
+                            boxShadow: "0 2px 8px rgba(233,30,99,0.3)",
+                            display: "inline-block",
                         }}
                     >
                         📄 Fiche Client Immobilier
                     </h2>
 
-                    {/* Grille labels/champs */}
+                    {/* Champs */}
                     <div
                         style={{
                             display: "grid",
@@ -237,43 +261,101 @@ export default function FeuilleForm() {
                             alignItems: "center",
                         }}
                     >
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📄 Numéro contrat</label>
+                        {[
+                            ["📄 Numéro contrat", "numeroContrat", "text", true],
+                            ["👤 Nom du client", "client", "text"],
+                            ["🏠 Adresse du bien", "adresse", "text"],
+                            ["📋 Annonce web", "annonceCollee", "textarea"],
+                            ["📅 Date RDV", "dateRDV", "date"],
+                            ["📝 Notes", "notes", "textarea"],
+                        ].map(([label, name, type, readOnly]) => (
+                            <React.Fragment key={name}>
+                                <label
+                                    style={{
+                                        background: "#444",
+                                        color: "white",
+                                        padding: "7px 12px",
+                                        borderRadius: "6px",
+                                        fontSize: "15px",
+                                    }}
+                                >
+                                    {label}
+                                </label>
+                                {type === "textarea" ? (
+                                    <textarea
+                                        name={name}
+                                        value={formData[name]}
+                                        onChange={handleChange}
+                                        rows="3"
+                                        readOnly={readOnly}
+                                        style={{
+                                            padding: "10px",
+                                            borderRadius: "8px",
+                                            border: "1px solid #bfcde6",
+                                            background: "white",
+                                            color: "#5a6475",
+                                        }}
+                                    />
+                                ) : (
+                                    <input
+                                        type={type}
+                                        name={name}
+                                        value={formData[name]}
+                                        onChange={handleChange}
+                                        readOnly={readOnly}
+                                        style={{
+                                            padding: "10px",
+                                            borderRadius: "8px",
+                                            border: "1px solid #bfcde6",
+                                            background: "white",
+                                            color: "#5a6475",
+                                        }}
+                                    />
+                                )}
+                            </React.Fragment>
+                        ))}
+
+                        {/* Fichiers */}
+                        <label
+                            style={{
+                                background: "#444",
+                                color: "white",
+                                padding: "7px 12px",
+                                borderRadius: "6px",
+                                fontSize: "15px",
+                            }}
+                        >
+                            📑 Documents
+                        </label>
                         <input
-                            name="numeroContrat"
-                            value={formData.numeroContrat ?? ""}
-                            readOnly
-                            placeholder="Numéro automatique à l’enregistrement"
-                            className="ph-muted"
+                            type="file"
+                            multiple
+                            accept=".pdf,.jpg,.jpeg,.png"
                             style={{
                                 padding: "10px",
                                 borderRadius: "8px",
                                 border: "1px solid #bfcde6",
-                                width: "100%",
                                 background: "white",
                                 color: "#5a6475",
                             }}
                         />
 
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>👤 Nom du client</label>
-                        <input name="client" value={formData.client} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
-
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>🏠 Adresse du bien</label>
-                        <input name="adresse" value={formData.adresse} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
-
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📋 Annonce web</label>
-                        <textarea name="annonceCollee" value={formData.annonceCollee} onChange={handleChange} rows="3" style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
-
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📅 Date RDV</label>
-                        <input type="date" name="dateRDV" value={formData.dateRDV} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
-
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📝 Notes</label>
-                        <textarea name="notes" value={formData.notes} onChange={handleChange} rows="3" style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
-
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📑 Documents</label>
-                        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }} />
-
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>🔄 Étape</label>
-                        <select name="etape" value={formData.etape} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }}>
+                        {/* Étape / Statut */}
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>
+                            🔄 Étape
+                        </label>
+                        <select
+                            name="etape"
+                            value={formData.etape}
+                            onChange={handleChange}
+                            style={{
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #bfcde6",
+                                background: "white",
+                                color: "#5a6475",
+                            }}
+                        >
                             <option value="">Sélectionner</option>
                             <option>R0 - Contact</option>
                             <option>R1 - Visite découverte</option>
@@ -286,8 +368,21 @@ export default function FeuilleForm() {
                             <option>Acte authentique</option>
                         </select>
 
-                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>📌 Statut</label>
-                        <select name="statut" value={formData.statut} onChange={handleChange} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #bfcde6", width: "100%", background: "white", color: "#5a6475" }}>
+                        <label style={{ background: "#444", color: "white", padding: "7px 12px", borderRadius: "6px", fontSize: "15px" }}>
+                            📌 Statut
+                        </label>
+                        <select
+                            name="statut"
+                            value={formData.statut}
+                            onChange={handleChange}
+                            style={{
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #bfcde6",
+                                background: "white",
+                                color: "#5a6475",
+                            }}
+                        >
                             <option value="">Sélectionner</option>
                             <option>À faire</option>
                             <option>En cours</option>
@@ -296,7 +391,7 @@ export default function FeuilleForm() {
                     </div>
                 </form>
 
-                {/* Colonne droite : Boutons */}
+                {/* ✅ Boutons rapides */}
                 <div
                     style={{
                         display: "flex",
@@ -311,29 +406,42 @@ export default function FeuilleForm() {
                         alignSelf: "center",
                     }}
                 >
-                    <button onClick={() => openPage("/manuel")} style={{ background: "#1a2a4f", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📘 Manuel</button>
-                    <button onClick={() => window.open("https://outlook.office.com/calendar/", "_blank")} style={{ background: "#1a2a4f", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📆 Outlook</button>
-                    <button onClick={() => window.open("https://teams.microsoft.com/", "_blank")} style={{ background: "#1a2a4f", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>🟪 Teams</button>
-                    <button onClick={() => openPage("/analyse")} style={{ background: "#e91e63", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>🤖 Analyse IA</button>
-                    <button onClick={() => openPage("/comparateur")} style={{ background: "#e91e63", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📊 Comparer annonces</button>
-                    <button onClick={() => navigate(`/mailtype?client=${encodeURIComponent(formData.client)}&adresse=${encodeURIComponent(formData.adresse)}`)} style={{ background: "#e91e63", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📧 Mail Type</button>
-                    <button onClick={() => openPage("/Feuille/Liste")} style={{ background: "#3f6628", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>📁 Voir toutes les fiches</button>
-
-                    {/* ✅ Bouton qui appelle directement handleSubmit */}
+                    <button onClick={() => openPage("/manuel")} style={btnDark}>
+                        📘 Manuel
+                    </button>
                     <button
-                        onClick={handleSubmit}
-                        style={{
-                            background: "#3f6628",
-                            color: "white",
-                            padding: "14px",
-                            border: "none",
-                            borderRadius: "10px",
-                            fontWeight: "bold",
-                            cursor: "pointer",
-                            marginTop: "25px",
-                            boxShadow: "0 4px 12px rgba(26,42,79,0.4)",
-                        }}
+                        onClick={() => window.open("https://outlook.office.com/calendar/", "_blank")}
+                        style={btnDark}
                     >
+                        📆 Outlook
+                    </button>
+                    <button
+                        onClick={() => window.open("https://teams.microsoft.com/", "_blank")}
+                        style={btnDark}
+                    >
+                        🟪 Teams
+                    </button>
+                    <button onClick={() => openPage("/analyse")} style={btnPink}>
+                        🤖 Analyse IA
+                    </button>
+                    <button onClick={() => openPage("/comparateur")} style={btnPink}>
+                        📊 Comparer annonces
+                    </button>
+                    <button onClick={() => openPage("/mailtype")} style={btnPink}>
+                        📧 Mail Type
+                    </button>
+                    <button onClick={() => openPage("/Feuille/Liste")} style={btnGreen}>
+                        📁 Voir toutes les fiches
+                    </button>
+                    <button onClick={() => openPage("/stats")} style={btnBlue}>
+                        📈 Statistiques / Progression
+                    </button>
+
+                    {/* 🆕 Création et Enregistrement */}
+                    <button onClick={handleNewFiche} style={btnBlue}>
+                        🆕 Créer une nouvelle fiche
+                    </button>
+                    <button onClick={handleSubmit} style={btnGreen}>
                         💾 Enregistrer la fiche client
                     </button>
                 </div>
@@ -341,3 +449,17 @@ export default function FeuilleForm() {
         </div>
     );
 }
+
+/* === Styles boutons === */
+const btnDark = {
+    background: "#1a2a4f",
+    color: "white",
+    padding: "12px",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "bold",
+};
+const btnPink = { ...btnDark, background: "#e91e63" };
+const btnGreen = { ...btnDark, background: "#3f6628" };
+const btnBlue = { ...btnDark, background: "#4fa3f7" };

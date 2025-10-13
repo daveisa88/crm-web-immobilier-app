@@ -4,14 +4,25 @@ import { useNavigate } from "react-router-dom";
 
 export default function ManuelPage() {
     const navigate = useNavigate();
-    const [openIndex, setOpenIndex] = useState(null);
 
-    const toggleSection = (index) => {
-        setOpenIndex(openIndex === index ? null : index);
+    // état d'ouverture par index
+    const [openSections, setOpenSections] = useState({});
+    const [allOpen, setAllOpen] = useState(false);
+
+    const toggleSection = (i) =>
+        setOpenSections((prev) => ({ ...prev, [i]: !prev[i] }));
+
+    const handleToggleAll = () => {
+        const next = !allOpen;
+        const map = {};
+        sections.forEach((_, i) => (map[i] = next));
+        setOpenSections(map);
+        setAllOpen(next);
     };
 
-    // 🌍 Sites de recherche immobilière
-    const immobilierSites = [
+    // ✅ TOUTES LES CATÉGORIES (4 pays + tous les thèmes métiers)
+    const sections = [
+        // ----- PAYS -----
         {
             title: "🏠🇫🇷 France",
             links: [
@@ -57,10 +68,8 @@ export default function ManuelPage() {
                 { text: "🏰 Selfhome", url: "https://www.selfhome.lu" },
             ],
         },
-    ];
 
-    // 🧰 Toutes les autres sections
-    const sections = [
+        // ----- THÈMES MÉTIERS -----
         {
             title: "📘 Déontologie & Cadre légal",
             links: [
@@ -214,15 +223,9 @@ export default function ManuelPage() {
         },
     ];
 
-    // 🧩 Regroupement principal
-    const allSections = [
-        { title: "🌍 Sites de recherche immobilière", children: immobilierSites },
-        { title: "🧰 Outils & Documents", children: sections },
-    ];
-
     return (
         <div style={{ padding: "30px", backgroundColor: "#243b55", minHeight: "100vh", fontFamily: "Segoe UI, sans-serif" }}>
-            {/* 🏷️ Titre */}
+            {/* Titre */}
             <h1 style={{
                 textAlign: "center",
                 fontSize: "24px",
@@ -238,8 +241,8 @@ export default function ManuelPage() {
                 🧰 Boîte à outils – Tous les liens utiles pour une bonne vente
             </h1>
 
-            {/* 🔙 Retour */}
-            <div style={{ textAlign: "center", marginBottom: "28px" }}>
+            {/* Boutons haut de page */}
+            <div style={{ textAlign: "center", marginBottom: "28px", display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
                 <button
                     onClick={() => navigate(-1)}
                     style={{
@@ -255,90 +258,103 @@ export default function ManuelPage() {
                 >
                     🔙 Retour à la feuille
                 </button>
+
+                <button
+                    onClick={handleToggleAll}
+                    style={{
+                        backgroundColor: "#4fa3f7",
+                        color: "white",
+                        padding: "8px 14px",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        boxShadow: "0 3px 8px rgba(79,163,247,0.35)",
+                    }}
+                >
+                    {allOpen ? "➖ Tout replier" : "➕ Tout déplier"}
+                </button>
             </div>
 
-            {/* Accordéons */}
-            <div style={{ maxWidth: "900px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "16px" }}>
-                {allSections.map((block, blockIndex) => (
-                    <div
-                        key={blockIndex}
-                        style={{
-                            backgroundColor: "#f0f6ff",
-                            borderLeft: "6px solid #1a2a4f",
-                            border: "1px solid #d0d8e6",
-                            borderRadius: "10px",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                            overflow: "hidden",
-                        }}
-                    >
-                        <button
-                            onClick={() => toggleSection(blockIndex)}
-                            style={{
-                                width: "100%",
-                                textAlign: "left",
-                                background: "#1a2a4f",
-                                color: "white",
-                                padding: "14px 18px",
-                                border: "none",
-                                fontSize: "18px",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                            }}
-                        >
-                            <span>{block.title}</span>
-                            <span style={{ fontSize: "18px", transition: "transform 0.3s", transform: openIndex === blockIndex ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-                        </button>
-
-                        {/* Sous-sections */}
+            {/* Menus déroulants */}
+            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+                {sections.map((section, idx) => {
+                    const isOpen = !!openSections[idx];
+                    return (
                         <div
+                            key={idx}
                             style={{
-                                maxHeight: openIndex === blockIndex ? "2000px" : "0px",
-                                opacity: openIndex === blockIndex ? 1 : 0,
-                                transition: "max-height 0.4s ease, opacity 0.4s ease",
+                                backgroundColor: "#f0f6ff",
+                                borderLeft: "6px solid #1a2a4f",
+                                border: "1px solid #d0d8e6",
+                                borderRadius: 10,
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                                 overflow: "hidden",
-                                background: "white",
-                                padding: openIndex === blockIndex ? "14px 18px 20px" : "0 18px",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "14px",
                             }}
                         >
-                            {block.children.map((section, idx) => (
-                                <div key={idx}>
-                                    <h3 style={{ color: "#1a2a4f", fontSize: "17px", marginBottom: "10px" }}>{section.title}</h3>
-                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                                        {section.links.map((link, i) => (
-                                            <a
-                                                key={i}
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{
-                                                    backgroundColor: "#4fa3f7",
-                                                    color: "white",
-                                                    padding: "8px 12px",
-                                                    borderRadius: "8px",
-                                                    textDecoration: "none",
-                                                    fontWeight: 500,
-                                                    fontSize: "14px",
-                                                    boxShadow: "0 2px 4px rgba(79,163,247,0.35)",
-                                                    transition: "all 0.15s ease-in-out",
-                                                }}
-                                                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#1a2a4f")}
-                                                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#4fa3f7")}
-                                            >
-                                                {link.text}
-                                            </a>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                            <button
+                                onClick={() => toggleSection(idx)}
+                                style={{
+                                    width: "100%",
+                                    textAlign: "left",
+                                    background: "#1a2a4f",
+                                    color: "white",
+                                    padding: "14px 18px",
+                                    border: "none",
+                                    fontSize: 16,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                }}
+                            >
+                                <span>{section.title}</span>
+                                <span style={{ fontSize: 18, transition: "transform 0.3s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                                    ▼
+                                </span>
+                            </button>
+
+                            <div
+                                style={{
+                                    maxHeight: isOpen ? "1000px" : 0,
+                                    opacity: isOpen ? 1 : 0,
+                                    transition: "max-height 0.4s ease, opacity 0.4s ease",
+                                    overflow: "hidden",
+                                    background: "white",
+                                    padding: isOpen ? "14px 18px 20px" : "0 18px",
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 10,
+                                }}
+                            >
+                                {section.links.map((link, i) => (
+                                    <a
+                                        key={i}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            backgroundColor: "#4fa3f7",
+                                            color: "white",
+                                            padding: "8px 12px",
+                                            borderRadius: 8,
+                                            textDecoration: "none",
+                                            fontWeight: 500,
+                                            fontSize: 14,
+                                            boxShadow: "0 2px 4px rgba(79,163,247,0.35)",
+                                            transition: "all 0.15s ease-in-out",
+                                        }}
+                                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#1a2a4f")}
+                                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#4fa3f7")}
+                                    >
+                                        {link.text}
+                                    </a>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
