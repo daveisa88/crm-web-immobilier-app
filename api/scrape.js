@@ -1,259 +1,161 @@
 // /api/scrape.js
-// Scraper mixte : LeBonCoin (API), SeLoger, PAP
-// Utilise ta clé SERPAPI_KEY et combine les résultats réels
+// =============================================================
+// 🏡 Scraper immobilier complet et fiable
+// Sources : Bien’ici + PAP.fr + DVF Etalab (valeurs foncières)
+// - Filtrage par département
+// - Prix au m² réel vs prix du marché (Etalab)
+// - Calcul de viabilité (écart au marché)
+// =============================================================
 
-
-
-// === Table de correspondance département → ID région LBC
-// === Table de correspondance département (code officiel) → ID région LeBonCoin ===
-const REGION_IDS = {
-  "01 Ain": "22",
-  "02 Aisne": "19",
-  "03 Allier": "22",
-  "04 Alpes-de-Haute-Provence": "21",
-  "05 Hautes-Alpes": "21",
-  "06 Alpes-Maritimes": "21",
-  "07 Ardèche": "22",
-  "08 Ardennes": "18",
-  "09 Ariège": "20",
-  "10 Aube": "18",
-  "11 Aude": "20",
-  "12 Aveyron": "20",
-  "13 Bouches-du-Rhône": "21",
-  "14 Calvados": "23",
-  "15 Cantal": "22",
-  "16 Charente": "16",
-  "17 Charente-Maritime": "16",
-  "18 Cher": "24",
-  "19 Corrèze": "19",
-  "2A Corse-du-Sud": "26",
-  "2B Haute-Corse": "26",
-  "21 Côte-d'Or": "27",
-  "22 Côtes-d'Armor": "17",
-  "23 Creuse": "19",
-  "24 Dordogne": "16",
-  "25 Doubs": "27",
-  "26 Drôme": "22",
-  "27 Eure": "23",
-  "28 Eure-et-Loir": "24",
-  "29 Finistère": "17",
-  "30 Gard": "20",
-  "31 Haute-Garonne": "20",
-  "32 Gers": "20",
-  "33 Gironde": "16",
-  "34 Hérault": "20",
-  "35 Ille-et-Vilaine": "17",
-  "36 Indre": "24",
-  "37 Indre-et-Loire": "24",
-  "38 Isère": "22",
-  "39 Jura": "27",
-  "40 Landes": "16",
-  "41 Loir-et-Cher": "24",
-  "42 Loire": "22",
-  "43 Haute-Loire": "22",
-  "44 Loire-Atlantique": "17",
-  "45 Loiret": "24",
-  "46 Lot": "20",
-  "47 Lot-et-Garonne": "16",
-  "48 Lozère": "20",
-  "49 Maine-et-Loire": "17",
-  "50 Manche": "23",
-  "51 Marne": "18",
-  "52 Haute-Marne": "18",
-  "53 Mayenne": "17",
-  "54 Meurthe-et-Moselle": "18",
-  "55 Meuse": "18",
-  "56 Morbihan": "17",
-  "57 Moselle": "18",
-  "58 Nièvre": "27",
-  "59 Nord": "19",
-  "60 Oise": "19",
-  "61 Orne": "23",
-  "62 Pas-de-Calais": "19",
-  "63 Puy-de-Dôme": "22",
-  "64 Pyrénées-Atlantiques": "16",
-  "65 Hautes-Pyrénées": "20",
-  "66 Pyrénées-Orientales": "20",
-  "67 Bas-Rhin": "18",
-  "68 Haut-Rhin": "18",
-  "69 Rhône": "22",
-  "70 Haute-Saône": "27",
-  "71 Saône-et-Loire": "27",
-  "72 Sarthe": "17",
-  "73 Savoie": "22",
-  "74 Haute-Savoie": "22",
-  "75 Paris": "25",
-  "76 Seine-Maritime": "23",
-  "77 Seine-et-Marne": "25",
-  "78 Yvelines": "25",
-  "79 Deux-Sèvres": "17",
-  "80 Somme": "19",
-  "81 Tarn": "20",
-  "82 Tarn-et-Garonne": "20",
-  "83 Var": "21",
-  "84 Vaucluse": "21",
-  "85 Vendée": "17",
-  "86 Vienne": "17",
-  "87 Haute-Vienne": "19",
-  "88 Vosges": "18",
-  "89 Yonne": "27",
-  "90 Territoire de Belfort": "27",
-  "91 Essonne": "25",
-  "92 Hauts-de-Seine": "25",
-  "93 Seine-Saint-Denis": "25",
-  "94 Val-de-Marne": "25",
-  "95 Val-d'Oise": "25",
+const DEPARTEMENTS_CODES = {
+  "Ain": "01", "Aisne": "02", "Allier": "03", "Alpes-de-Haute-Provence": "04",
+  "Hautes-Alpes": "05", "Alpes-Maritimes": "06", "Ardèche": "07", "Ardennes": "08",
+  "Ariège": "09", "Aube": "10", "Aude": "11", "Aveyron": "12", "Bouches-du-Rhône": "13",
+  "Calvados": "14", "Cantal": "15", "Charente": "16", "Charente-Maritime": "17",
+  "Cher": "18", "Corrèze": "19", "Corse-du-Sud": "2A", "Haute-Corse": "2B",
+  "Côte-d'Or": "21", "Côtes-d'Armor": "22", "Creuse": "23", "Dordogne": "24",
+  "Doubs": "25", "Drôme": "26", "Eure": "27", "Eure-et-Loir": "28", "Finistère": "29",
+  "Gard": "30", "Haute-Garonne": "31", "Gers": "32", "Gironde": "33", "Hérault": "34",
+  "Ille-et-Vilaine": "35", "Indre": "36", "Indre-et-Loire": "37", "Isère": "38",
+  "Jura": "39", "Landes": "40", "Loir-et-Cher": "41", "Loire": "42", "Haute-Loire": "43",
+  "Loire-Atlantique": "44", "Loiret": "45", "Lot": "46", "Lot-et-Garonne": "47",
+  "Lozère": "48", "Maine-et-Loire": "49", "Manche": "50", "Marne": "51",
+  "Haute-Marne": "52", "Mayenne": "53", "Meurthe-et-Moselle": "54", "Meuse": "55",
+  "Morbihan": "56", "Moselle": "57", "Nièvre": "58", "Nord": "59", "Oise": "60",
+  "Orne": "61", "Pas-de-Calais": "62", "Puy-de-Dôme": "63", "Pyrénées-Atlantiques": "64",
+  "Hautes-Pyrénées": "65", "Pyrénées-Orientales": "66", "Bas-Rhin": "67",
+  "Haut-Rhin": "68", "Rhône": "69", "Haute-Saône": "70", "Saône-et-Loire": "71",
+  "Sarthe": "72", "Savoie": "73", "Haute-Savoie": "74", "Paris": "75",
+  "Seine-Maritime": "76", "Seine-et-Marne": "77", "Yvelines": "78",
+  "Deux-Sèvres": "79", "Somme": "80", "Tarn": "81", "Tarn-et-Garonne": "82",
+  "Var": "83", "Vaucluse": "84", "Vendée": "85", "Vienne": "86", "Haute-Vienne": "87",
+  "Vosges": "88", "Yonne": "89", "Territoire de Belfort": "90", "Essonne": "91",
+  "Hauts-de-Seine": "92", "Seine-Saint-Denis": "93", "Val-de-Marne": "94",
+  "Val-d'Oise": "95",
 };
 
-
-// === Région correspondante pour le calcul de viabilité
-const DEPT_TO_REGION = {
-  "Essonne": "Île-de-France",
-  "Paris": "Île-de-France",
-  "Seine-et-Marne": "Île-de-France",
-  "Yvelines": "Île-de-France",
-  "Nord": "Hauts-de-France",
-  "Pas-de-Calais": "Hauts-de-France",
-  "Rhône": "Auvergne-Rhône-Alpes",
-  "Haute-Savoie": "Auvergne-Rhône-Alpes",
-  "Isère": "Auvergne-Rhône-Alpes",
-  "Var": "Provence-Alpes-Côte d’Azur",
-  "Vaucluse": "Provence-Alpes-Côte d’Azur",
-  "Bouches-du-Rhône": "Provence-Alpes-Côte d’Azur",
-  "Haute-Garonne": "Occitanie",
-  "Hérault": "Occitanie",
-  "Gironde": "Nouvelle-Aquitaine",
-  "Pyrénées-Atlantiques": "Nouvelle-Aquitaine",
-  "Loire-Atlantique": "Pays de la Loire",
-  "Maine-et-Loire": "Pays de la Loire",
-  "Ille-et-Vilaine": "Bretagne",
-  "Finistère": "Bretagne",
-  "Bas-Rhin": "Grand Est",
-  "Haut-Rhin": "Grand Est",
-  "Eure": "Normandie",
-  "Calvados": "Normandie",
-};
-
-// === Fonctions utilitaires ===
+// Utilitaires
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const safeDivide = (a, b) => (b ? a / b : 0);
 
-function computeViability(pricePerM2, departement) {
-  const region = DEPT_TO_REGION[departement] || "Nouvelle-Aquitaine";
-  const median = MEDIANS[region] || 3000;
-  const ratio = pricePerM2 / median;
+// Calcul viabilité basé sur prix marché DVF
+const computeViability = (prixM2, refM2) => {
+  if (!prixM2 || !refM2) return 0;
+  const ratio = prixM2 / refM2;
   const score = 10 - (ratio - 1) * 10;
   return Math.round(clamp(score, 0, 10) * 10) / 10;
+};
+
+// 🔧 Fonction pour récupérer la moyenne DVF par département (Etalab)
+async function getDVFMedian(departementCode) {
+  try {
+    const dvfUrl = `https://api.data.gouv.fr/api/1/databases/dvf/transactions/?q=&filters={"code_departement":"${departementCode}","type_local":"Appartement"}&page_size=100`;
+    const res = await fetch(dvfUrl);
+    const data = await res.json();
+    if (!data || !data.results?.length) return 3000;
+    const prixM2List = data.results
+      .filter((r) => r.valeur_fonciere && r.surface_reelle_bati)
+      .map((r) => r.valeur_fonciere / r.surface_reelle_bati)
+      .sort((a, b) => a - b);
+    const mid = Math.floor(prixM2List.length / 2);
+    return Math.round(prixM2List[mid] || 3000);
+  } catch (err) {
+    console.warn("⚠️ Erreur DVF:", err.message);
+    return 3000;
+  }
 }
 
-function extractFromText(text = "") {
-  const prixMatch = text.match(/(\d{2,3}(?:[\s.,]?\d{3})*)\s*€/) || [];
-  const surfMatch = text.match(/(\d{1,3})\s*(m2|m²)/i) || [];
-  const prix = prixMatch[1] ? Number(prixMatch[1].replace(/[^\d]/g, "")) : 0;
-  const surface = surfMatch[1] ? Number(surfMatch[1].replace(/[^\d]/g, "")) : 0;
-  return { prix, surface };
-}
-
-function normalizeAnnonce(item, departement, source = "Autre") {
-  const title = item.title || item.name || "Annonce immobilière";
-  const desc = item.description || item.snippet || "";
-  const { prix, surface } = extractFromText(`${title} ${desc}`);
-  const prixM2 = surface > 0 ? Math.round(prix / surface) : 0;
-  return {
-    titre: title,
-    departement,
-    prix,
-    surface,
-    prixM2,
-    viabilite: computeViability(prixM2, departement),
-    lien: item.link || item.url || "#",
-    source,
-  };
-}
-
-// === HANDLER PRINCIPAL ===
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
-    const departement = url.searchParams.get("departement") || "Essonne";
-    const serpKey = process.env.SERPAPI_KEY;
-    const annonces = [];
+    const departement = url.searchParams.get("departement") || "Rhône";
+    const prixMin = Number(url.searchParams.get("prixMin") || 0);
+    const prixMax = Number(url.searchParams.get("prixMax") || 10000000);
+    const codeDep = DEPARTEMENTS_CODES[departement] || "69";
 
-    // === 1️⃣ LEBONCOIN DIRECT ===
+    // 1️⃣ Récupération du prix médian départemental (Etalab)
+    const medianRef = await getDVFMedian(codeDep);
+    console.log(`📊 Prix médian Etalab pour ${departement} (${codeDep}) : ${medianRef} €/m²`);
+
+    let annonces = [];
+
+    // 2️⃣ Source principale : Bien’ici
     try {
-      const regionId = REGION_IDS[departement] || "25";
-      const lbcRes = await fetch("https://api.leboncoin.fr/finder/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filters: {
-            category: { id: "9" },
-            enums: { ad_type: ["offer"] },
-            location: { regions: [regionId] },
-            keywords: { text: departement },
-          },
-          limit: 25,
-          offset: 0,
-          sort_by: "time",
-        }),
+      const filters = {
+        size: 40,
+        from: 0,
+        transactionType: "buy",
+        propertyType: ["house", "apartment"],
+        filters: {
+          priceMin,
+          priceMax,
+          departmentCode: codeDep,
+        },
+      };
+      const apiUrl = `https://www.bienici.com/realEstateAds.json?filters=${encodeURIComponent(
+        JSON.stringify(filters)
+      )}`;
+      const r = await fetch(apiUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          Referer: "https://www.bienici.com",
+        },
       });
+      const json = await r.json();
 
-      const lbcJson = await lbcRes.json();
-      if (Array.isArray(lbcJson.ads)) {
-        lbcJson.ads.forEach((ad) => {
-          const prix = ad.price || 0;
-          const surface = ad.attributes?.find((a) => a.key === "square")?.value || 0;
-          const prixM2 = surface > 0 ? Math.round(prix / surface) : 0;
-          annonces.push({
-            titre: ad.subject || "Annonce LeBonCoin",
+      if (Array.isArray(json.realEstateAds)) {
+        annonces = json.realEstateAds.map((a) => {
+          const prixM2 = safeDivide(a.price, a.surface);
+          return {
+            titre: a.title || `${a.propertyTypeLabel} à ${a.city}`,
             departement,
-            prix,
-            surface,
-            prixM2,
-            viabilite: computeViability(prixM2, departement),
-            lien: `https://www.leboncoin.fr/${ad.category_id}/${ad.list_id}.htm`,
-            source: "LeBonCoin",
-          });
+            prix: a.price,
+            surface: a.surface,
+            prixM2: Math.round(prixM2),
+            viabilite: computeViability(prixM2, medianRef),
+            lien: `https://www.bienici.com/annonce/${a.id}`,
+            source: "Bienici",
+          };
         });
       }
     } catch (err) {
-      console.warn("⚠️ Erreur LeBonCoin:", err.message);
+      console.warn("⚠️ Erreur Bienici:", err.message);
     }
 
-    // === 2️⃣ SERPAPI (SeLoger + PAP) ===
-    if (serpKey) {
-      const query = `immobilier à vendre ${departement} site:seloger.com OR site:pap.fr`;
-      const serpUrl = `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(
-        query
-      )}&api_key=${serpKey}&google_domain=google.fr&hl=fr&num=30`;
+    // 3️⃣ Fallback : PAP.fr si Bien’ici vide
+    if (!annonces.length) {
+      console.log(`📉 Aucune donnée Bienici, tentative PAP.fr pour ${departement}`);
+      const papUrl = `https://www.pap.fr/api/annonce/search?typesbien=appartement,maison&transaction=vente&departement=${encodeURIComponent(
+        codeDep
+      )}`;
+      const papRes = await fetch(papUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
+      const papJson = await papRes.json();
 
-      const serpRes = await fetch(serpUrl);
-      const serpJson = await serpRes.json();
-
-      let rawItems = [];
-      if (Array.isArray(serpJson.organic_results))
-        rawItems = serpJson.organic_results;
-      else if (Array.isArray(serpJson.inline_images))
-        rawItems = serpJson.inline_images;
-      else if (Array.isArray(serpJson.local_results))
-        rawItems = serpJson.local_results;
-      else rawItems = serpJson.results || [];
-
-      rawItems
-        .filter((it) => it.link && (it.link.includes("seloger.com") || it.link.includes("pap.fr")))
-        .forEach((it) => {
-          annonces.push(normalizeAnnonce(it, departement, it.link.includes("seloger") ? "SeLoger" : "PAP"));
+      if (Array.isArray(papJson.annonces)) {
+        annonces = papJson.annonces.map((a) => {
+          const prixM2 = safeDivide(a.prix, a.surface);
+          return {
+            titre: a.titre || `${a.titreAnnonce} à ${a.ville}`,
+            departement,
+            prix: a.prix,
+            surface: a.surface,
+            prixM2: Math.round(prixM2),
+            viabilite: computeViability(prixM2, medianRef),
+            lien: `https://www.pap.fr/annonce/${a.id}`,
+            source: "PAP",
+          };
         });
+      }
     }
 
-    // === 3️⃣ Nettoyage & tri ===
+    // 4️⃣ Nettoyage & tri final
     const clean = annonces
-      .filter((a) => a.prix > 0 && a.surface > 0)
+      .filter((a) => a.prix >= prixMin && a.prix <= prixMax && a.surface > 0)
       .sort((a, b) => b.viabilite - a.viabilite)
-      .slice(0, 50);
+      .slice(0, 40);
 
-    if (!clean.length) {
-      throw new Error("Aucune annonce trouvée (LeBonCoin / SeLoger / PAP).");
-    }
+    if (!clean.length)
+      throw new Error(`Aucune annonce trouvée sur Bienici ni PAP pour ${departement}.`);
 
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     res.status(200).json(clean);
@@ -261,4 +163,4 @@ module.exports = async (req, res) => {
     console.error("❌ /api/scrape error:", err);
     res.status(500).json({ error: true, message: err.message });
   }
-};
+}
