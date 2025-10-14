@@ -34,7 +34,7 @@ function normalizeAnnonce(item, region) {
         prixM2,
         viabilite: computeViability(prixM2, region),
         lien: item.link || item.url || "#",
-        source: item.source || "SerpAPI",
+        source: item.source || "SERPAPI_KEY",
     };
 }
 
