@@ -2,22 +2,7 @@
 // Scraper mixte : LeBonCoin (API), SeLoger, PAP
 // Utilise ta clé SERPAPI_KEY et combine les résultats réels
 
-// === Prix médian par m² par grande région (sert à la viabilité)
-const MEDIANS = {
-  "Île-de-France": 7200,
-  "Auvergne-Rhône-Alpes": 3800,
-  "Provence-Alpes-Côte d’Azur": 4500,
-  "Centre-Val de Loire": 2200,
-  "Grand Est": 2200,
-  "Normandie": 2300,
-  "Bretagne": 2800,
-  "Pays de la Loire": 2900,
-  "Hauts-de-France": 2100,
-  "Bourgogne-Franche-Comté": 2100,
-  "Nouvelle-Aquitaine": 2600,
-  "Occitanie": 2700,
-  "Corse": 4000,
-};
+
 
 // === Table de correspondance département → ID région LBC
 // === Table de correspondance département (code officiel) → ID région LeBonCoin ===
