@@ -1,10 +1,7 @@
 // /api/scrape.js
 // =============================================================
-// 🏡 Scraper immobilier complet et fiable
-// Sources : Bien’ici + PAP.fr + DVF Etalab (valeurs foncières)
-// - Filtrage par département
-// - Prix au m² réel vs prix du marché (Etalab)
-// - Calcul de viabilité (écart au marché)
+// 🏡 Scraper immobilier fiable
+// Sources : Bien’ici + Etalab DVF (prix marché) + fallback PAP.fr
 // =============================================================
 
 const DEPARTEMENTS_CODES = {
@@ -38,7 +35,7 @@ const DEPARTEMENTS_CODES = {
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const safeDivide = (a, b) => (b ? a / b : 0);
 
-// Calcul viabilité basé sur prix marché DVF
+// Calcul viabilité basé sur écart au prix marché
 const computeViability = (prixM2, refM2) => {
   if (!prixM2 || !refM2) return 0;
   const ratio = prixM2 / refM2;
@@ -46,19 +43,22 @@ const computeViability = (prixM2, refM2) => {
   return Math.round(clamp(score, 0, 10) * 10) / 10;
 };
 
-// 🔧 Fonction pour récupérer la moyenne DVF par département (Etalab)
+// Fonction pour récupérer le prix médian Etalab (via data.economie.gouv.fr)
 async function getDVFMedian(departementCode) {
   try {
-    const dvfUrl = `https://api.data.gouv.fr/api/1/databases/dvf/transactions/?q=&filters={"code_departement":"${departementCode}","type_local":"Appartement"}&page_size=100`;
+    const dvfUrl = `https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/demandes-de-valeurs-foncieres/records?where=code_departement="${departementCode}" and type_local="Appartement"&limit=100`;
     const res = await fetch(dvfUrl);
     const data = await res.json();
-    if (!data || !data.results?.length) return 3000;
-    const prixM2List = data.results
+    const results = data.results || [];
+    if (!results.length) return 3000;
+
+    const prixM2 = results
       .filter((r) => r.valeur_fonciere && r.surface_reelle_bati)
       .map((r) => r.valeur_fonciere / r.surface_reelle_bati)
       .sort((a, b) => a - b);
-    const mid = Math.floor(prixM2List.length / 2);
-    return Math.round(prixM2List[mid] || 3000);
+
+    const median = Math.round(prixM2[Math.floor(prixM2.length / 2)]);
+    return median || 3000;
   } catch (err) {
     console.warn("⚠️ Erreur DVF:", err.message);
     return 3000;
@@ -73,9 +73,9 @@ export default async function handler(req, res) {
     const prixMax = Number(url.searchParams.get("prixMax") || 10000000);
     const codeDep = DEPARTEMENTS_CODES[departement] || "69";
 
-    // 1️⃣ Récupération du prix médian départemental (Etalab)
+    // 1️⃣ Prix médian marché Etalab
     const medianRef = await getDVFMedian(codeDep);
-    console.log(`📊 Prix médian Etalab pour ${departement} (${codeDep}) : ${medianRef} €/m²`);
+    console.log(`📊 Prix médian Etalab ${departement} (${codeDep}) = ${medianRef} €/m²`);
 
     let annonces = [];
 
@@ -86,21 +86,24 @@ export default async function handler(req, res) {
         from: 0,
         transactionType: "buy",
         propertyType: ["house", "apartment"],
+        filterType: "departement",
         filters: {
-          priceMin,
-          priceMax,
-          departmentCode: codeDep,
+          location: { departmentCode: codeDep },
+          price: { min: prixMin, max: prixMax },
         },
       };
+
       const apiUrl = `https://www.bienici.com/realEstateAds.json?filters=${encodeURIComponent(
         JSON.stringify(filters)
       )}`;
+
       const r = await fetch(apiUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0",
           Referer: "https://www.bienici.com",
         },
       });
+
       const json = await r.json();
 
       if (Array.isArray(json.realEstateAds)) {
@@ -122,43 +125,45 @@ export default async function handler(req, res) {
       console.warn("⚠️ Erreur Bienici:", err.message);
     }
 
-    // 3️⃣ Fallback : PAP.fr si Bien’ici vide
+    // 3️⃣ Fallback : si Bienici vide → tentative PAP
     if (!annonces.length) {
-      console.log(`📉 Aucune donnée Bienici, tentative PAP.fr pour ${departement}`);
-      const papUrl = `https://www.pap.fr/api/annonce/search?typesbien=appartement,maison&transaction=vente&departement=${encodeURIComponent(
-        codeDep
-      )}`;
+      console.log(`📉 Aucune donnée Bienici → tentative PAP.fr`);
+      const papUrl = `https://www.pap.fr/api/annonce/search?typesbien=appartement,maison&transaction=vente&departement=${codeDep}`;
       const papRes = await fetch(papUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
-      const papJson = await papRes.json();
+      const papText = await papRes.text();
 
-      if (Array.isArray(papJson.annonces)) {
-        annonces = papJson.annonces.map((a) => {
-          const prixM2 = safeDivide(a.prix, a.surface);
-          return {
-            titre: a.titre || `${a.titreAnnonce} à ${a.ville}`,
-            departement,
-            prix: a.prix,
-            surface: a.surface,
-            prixM2: Math.round(prixM2),
-            viabilite: computeViability(prixM2, medianRef),
-            lien: `https://www.pap.fr/annonce/${a.id}`,
-            source: "PAP",
-          };
-        });
+      try {
+        const papJson = JSON.parse(papText);
+        if (Array.isArray(papJson.annonces)) {
+          annonces = papJson.annonces.map((a) => {
+            const prixM2 = safeDivide(a.prix, a.surface);
+            return {
+              titre: a.titre || `${a.titreAnnonce} à ${a.ville}`,
+              departement,
+              prix: a.prix,
+              surface: a.surface,
+              prixM2: Math.round(prixM2),
+              viabilite: computeViability(prixM2, medianRef),
+              lien: `https://www.pap.fr/annonce/${a.id}`,
+              source: "PAP",
+            };
+          });
+        }
+      } catch {
+        console.warn("⚠️ PAP a renvoyé du HTML (probablement bloqué sans proxy).");
       }
     }
 
-    // 4️⃣ Nettoyage & tri final
+    // 4️⃣ Nettoyage & sortie
     const clean = annonces
-      .filter((a) => a.prix >= prixMin && a.prix <= prixMax && a.surface > 0)
+      .filter((a) => a.prix > 0 && a.surface > 0)
       .sort((a, b) => b.viabilite - a.viabilite)
       .slice(0, 40);
 
     if (!clean.length)
       throw new Error(`Aucune annonce trouvée sur Bienici ni PAP pour ${departement}.`);
 
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.status(200).json(clean);
+    res.status(200).json({ medianRef, annonces: clean });
   } catch (err) {
     console.error("❌ /api/scrape error:", err);
     res.status(500).json({ error: true, message: err.message });
