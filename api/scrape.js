@@ -2,6 +2,24 @@
 // Scraper mixte : LeBonCoin (API), SeLoger, PAP
 // Utilise ta clé SERPAPI_KEY et combine les résultats réels
 
+// === Prix médian par m² par grande région (sert à la viabilité)
+const MEDIANS = {
+  "Île-de-France": 7200,
+  "Auvergne-Rhône-Alpes": 3800,
+  "Provence-Alpes-Côte d’Azur": 4500,
+  "Centre-Val de Loire": 2200,
+  "Grand Est": 2200,
+  "Normandie": 2300,
+  "Bretagne": 2800,
+  "Pays de la Loire": 2900,
+  "Hauts-de-France": 2100,
+  "Bourgogne-Franche-Comté": 2100,
+  "Nouvelle-Aquitaine": 2600,
+  "Occitanie": 2700,
+  "Corse": 4000,
+};
+
+// === Table de correspondance département → ID région LBC
 const REGION_IDS = {
   "Ain": "22",
   "Aisne": "19",
@@ -101,9 +119,39 @@ const REGION_IDS = {
   "Val-d'Oise": "25",
 };
 
+// === Région correspondante pour le calcul de viabilité
+const DEPT_TO_REGION = {
+  "Essonne": "Île-de-France",
+  "Paris": "Île-de-France",
+  "Seine-et-Marne": "Île-de-France",
+  "Yvelines": "Île-de-France",
+  "Nord": "Hauts-de-France",
+  "Pas-de-Calais": "Hauts-de-France",
+  "Rhône": "Auvergne-Rhône-Alpes",
+  "Haute-Savoie": "Auvergne-Rhône-Alpes",
+  "Isère": "Auvergne-Rhône-Alpes",
+  "Var": "Provence-Alpes-Côte d’Azur",
+  "Vaucluse": "Provence-Alpes-Côte d’Azur",
+  "Bouches-du-Rhône": "Provence-Alpes-Côte d’Azur",
+  "Haute-Garonne": "Occitanie",
+  "Hérault": "Occitanie",
+  "Gironde": "Nouvelle-Aquitaine",
+  "Pyrénées-Atlantiques": "Nouvelle-Aquitaine",
+  "Loire-Atlantique": "Pays de la Loire",
+  "Maine-et-Loire": "Pays de la Loire",
+  "Ille-et-Vilaine": "Bretagne",
+  "Finistère": "Bretagne",
+  "Bas-Rhin": "Grand Est",
+  "Haut-Rhin": "Grand Est",
+  "Eure": "Normandie",
+  "Calvados": "Normandie",
+};
 
+// === Fonctions utilitaires ===
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-function computeViability(pricePerM2, region) {
+
+function computeViability(pricePerM2, departement) {
+  const region = DEPT_TO_REGION[departement] || "Nouvelle-Aquitaine";
   const median = MEDIANS[region] || 3000;
   const ratio = pricePerM2 / median;
   const score = 10 - (ratio - 1) * 10;
@@ -135,6 +183,7 @@ function normalizeAnnonce(item, departement, source = "Autre") {
   };
 }
 
+// === HANDLER PRINCIPAL ===
 module.exports = async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -144,20 +193,23 @@ module.exports = async (req, res) => {
 
     // === 1️⃣ LEBONCOIN DIRECT ===
     try {
+      const regionId = REGION_IDS[departement] || "25";
       const lbcRes = await fetch("https://api.leboncoin.fr/finder/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           filters: {
-            category: { id: "9" }, // ventes immobilières
+            category: { id: "9" },
             enums: { ad_type: ["offer"] },
+            location: { regions: [regionId] },
             keywords: { text: departement },
           },
-          limit: 20,
+          limit: 25,
           offset: 0,
-          sort_by: "price",
+          sort_by: "time",
         }),
       });
+
       const lbcJson = await lbcRes.json();
       if (Array.isArray(lbcJson.ads)) {
         lbcJson.ads.forEach((ad) => {
@@ -210,7 +262,7 @@ module.exports = async (req, res) => {
     const clean = annonces
       .filter((a) => a.prix > 0 && a.surface > 0)
       .sort((a, b) => b.viabilite - a.viabilite)
-      .slice(0, 40);
+      .slice(0, 50);
 
     if (!clean.length) {
       throw new Error("Aucune annonce trouvée (LeBonCoin / SeLoger / PAP).");
