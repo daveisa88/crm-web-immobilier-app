@@ -1,204 +1,118 @@
-// src/ScraperImmo.js
-import React, { useMemo, useState } from "react";
+// /api/scrape.js
+// Serverless function for Vercel (Node 18+). Uses SerpAPI.
+// Expects SERPAPI_KEY in environment variables.
 
-export default function ScraperImmo() {
-    const [region, setRegion] = useState("Île-de-France");
-    const [annonces, setAnnonces] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [tri, setTri] = useState({ key: "viabilite", dir: "desc" });
+const MEDIANS = {
+    "Île-de-France": 7200,
+    "Auvergne-Rhône-Alpes": 3800,
+    "Provence-Alpes-Côte d’Azur": 4500,
+    "Centre-Val de Loire": 2200,
+    "Grand Est": 2200,
+    "Normandie": 2300,
+};
 
-    const handleScrape = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/scrape?region=${encodeURIComponent(region)}`);
-            if (!res.ok) throw new Error("API indisponible");
-            const data = await res.json();
-            setAnnonces(data);
-        } catch (err) {
-            alert("❌ " + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const sorted = useMemo(() => {
-        const arr = [...annonces];
-        arr.sort((a, b) => {
-            const { key, dir } = tri;
-            const mul = dir === "asc" ? 1 : -1;
-            return (a[key] - b[key]) * mul;
-        });
-        return arr;
-    }, [annonces, tri]);
-
-    const meilleursPlans = useMemo(
-        () => sorted.filter((a) => a.viabilite >= 8).slice(0, 6),
-        [sorted]
-    );
-
-    const header = (label, key) => (
-        <th
-            style={th}
-            onClick={() =>
-                setTri((t) => ({
-                    key,
-                    dir: t.key === key && t.dir === "desc" ? "asc" : "desc",
-                }))
-            }
-        >
-            {label} {tri.key === key ? (tri.dir === "asc" ? "▲" : "▼") : ""}
-        </th>
-    );
-
-    return (
-        <div
-            style={{
-                backgroundColor: "#243b55",
-                color: "white",
-                minHeight: "100vh",
-                padding: "40px",
-                fontFamily: "Segoe UI",
-            }}
-        >
-            <h1 style={{ textAlign: "center", color: "#e91e63", marginBottom: 20 }}>
-                🏡 Scraper Immo — Annonces & Opportunités
-            </h1>
-
-            {/* Contrôles */}
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-                <select
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    style={select}
-                >
-                    <option>Île-de-France</option>
-                    <option>Auvergne-Rhône-Alpes</option>
-                    <option>Provence-Alpes-Côte d’Azur</option>
-                    <option>Centre-Val de Loire</option>
-                    <option>Grand Est</option>
-                    <option>Normandie</option>
-                </select>
-                <button onClick={handleScrape} disabled={loading} style={btnRun}>
-                    {loading ? "🔄 Analyse..." : "🚀 Lancer la recherche"}
-                </button>
-            </div>
-
-            {/* Meilleurs plans */}
-            {meilleursPlans.length > 0 && (
-                <div
-                    style={{
-                        background: "#1a2a4f",
-                        borderRadius: 12,
-                        padding: 16,
-                        marginBottom: 24,
-                    }}
-                >
-                    <h2 style={{ margin: 0, color: "#2ecc71" }}>💎 Opportunités viables (≥ 8/10)</h2>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 12, marginTop: 12 }}>
-                        {meilleursPlans.map((a, i) => (
-                            <div key={i} style={card}>
-                                <div style={{ fontWeight: "bold" }}>{a.titre}</div>
-                                <div style={{ opacity: 0.9 }}>{a.ville}</div>
-                                <div style={{ marginTop: 6 }}>
-                                    <b>{a.prix.toLocaleString()} €</b> — {a.surface} m² —{" "}
-                                    <b>{a.prixM2.toLocaleString()} €/m²</b>
-                                </div>
-                                <div style={{ marginTop: 6, color: a.viabilite >= 8 ? "#2ecc71" : "#f1c40f" }}>
-                                    Viabilité : {a.viabilite}/10
-                                </div>
-                                <a href={a.lien} target="_blank" rel="noreferrer" style={link}>
-                                    Ouvrir l’annonce →
-                                </a>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Tableau complet */}
-            {sorted.length > 0 && (
-                <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", color: "#fff" }}>
-                        <thead style={{ background: "#1a2a4f" }}>
-                            <tr>
-                                {header("Titre", "titre")}
-                                {header("Ville", "ville")}
-                                {header("Prix (€)", "prix")}
-                                {header("Surface (m²)", "surface")}
-                                {header("€/m²", "prixM2")}
-                                {header("Viabilité", "viabilite")}
-                                <th style={th}>Lien</th>
-                                <th style={th}>Source</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sorted.map((a, i) => (
-                                <tr key={i} style={{ background: i % 2 ? "#2b3f66" : "#334c7a" }}>
-                                    <td style={td}>{a.titre}</td>
-                                    <td style={td}>{a.ville}</td>
-                                    <td style={td}>{a.prix.toLocaleString()}</td>
-                                    <td style={td}>{a.surface}</td>
-                                    <td style={td}>{a.prixM2.toLocaleString()}</td>
-                                    <td style={{ ...td, color: a.viabilite >= 8 ? "#2ecc71" : "#f1c40f" }}>
-                                        {a.viabilite}
-                                    </td>
-                                    <td style={td}>
-                                        <a href={a.lien} target="_blank" rel="noreferrer" style={link}>
-                                            Voir
-                                        </a>
-                                    </td>
-                                    <td style={{ ...td, opacity: 0.85 }}>{a.source}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {/* Aide */}
-            {sorted.length === 0 && !loading && (
-                <p style={{ textAlign: "center", opacity: 0.85 }}>
-                    ⚠️ Aucun résultat pour l’instant. Choisis une région puis clique “🚀 Lancer la recherche”.
-                </p>
-            )}
-        </div>
-    );
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+function computeViability(pricePerM2, region) {
+    const median = MEDIANS[region] || 3000;
+    const ratio = pricePerM2 / median;
+    const score = 10 - (ratio - 1) * 10;
+    return Math.round(clamp(score, 0, 10) * 10) / 10;
 }
 
-const select = {
-    padding: "10px 16px",
-    borderRadius: 8,
-    fontSize: 16,
-    background: "#4fa3f7",
-    color: "white",
-    border: "none",
+function normalizeAnnonce(item, region) {
+    // item from SerpAPI may differ; protect access
+    const rawPrice = item.price || item.formatted_price || "";
+    const rawSurface = item.surface || item.area || "";
+    const prix = Number(String(rawPrice).replace(/\D/g, "")) || 0;
+    const surface = Number(String(rawSurface).replace(/\D/g, "")) || 0;
+    const prixM2 = surface > 0 ? Math.round(prix / surface) : 0;
+    return {
+        titre: item.title || item.name || item.snippet || "Annonce",
+        ville: item.address || region,
+        prix,
+        surface,
+        prixM2,
+        viabilite: computeViability(prixM2, region),
+        lien: item.link || item.url || "#",
+        source: item.source || "SerpAPI",
+    };
+}
+
+module.exports = async (req, res) => {
+    try {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const region = url.searchParams.get("region") || "Île-de-France";
+        const serpKey = process.env.SERPAPI_KEY;
+
+        // If no key, fall back to demo synthetic data (keeps frontend functional)
+        if (!serpKey) {
+            // demo generator (same as previous demo)
+            const cities = {
+                "Île-de-France": ["Paris 15e", "Ivry-sur-Seine", "Montreuil", "Versailles"],
+                "Auvergne-Rhône-Alpes": ["Lyon", "Villeurbanne", "Grenoble", "Annecy"],
+                "Provence-Alpes-Côte d’Azur": ["Marseille", "Nice", "Aix-en-Provence", "Toulon"],
+                "Centre-Val de Loire": ["Tours", "Orléans", "Chartres", "Bourges"],
+                "Grand Est": ["Strasbourg", "Nancy", "Metz", "Reims"],
+                "Normandie": ["Rouen", "Caen", "Le Havre", "Évreux"],
+            }[region] || ["Centre-ville"];
+
+            const rand = (min, max) => Math.round(min + Math.random() * (max - min));
+            const base = MEDIANS[region] || 3000;
+            const items = Array.from({ length: 24 }).map((_, i) => {
+                const surface = rand(18, 120);
+                const prixM2 = rand(Math.round(base * 0.6), Math.round(base * 1.2));
+                const prix = prixM2 * surface;
+                return {
+                    titre: `${surface} m² — ${["Studio", "T2", "T3", "Maison", "Loft"][i % 5]} ${cities[i % cities.length]}`,
+                    ville: cities[i % cities.length],
+                    prix,
+                    surface,
+                    prixM2,
+                    viabilite: computeViability(prixM2, region),
+                    lien: `https://exemple-immobilier.test/annonce/${region}/${i + 1}`,
+                    source: "DEMO",
+                };
+            });
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            return res.status(200).json(items);
+        }
+
+        // Real SerpAPI call
+        const query = `immobilier à vendre ${region}`;
+        const serpUrl = `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}&api_key=${encodeURIComponent(serpKey)}&num=30`;
+
+        const fetchRes = await fetch(serpUrl);
+        if (!fetchRes.ok) {
+            const txt = await fetchRes.text();
+            throw new Error(`SerpAPI error: ${fetchRes.status} - ${txt}`);
+        }
+        const json = await fetchRes.json();
+
+        // Attempt to get multiple possible fields (properties_results, local_results, organic_results)
+        let rawItems = [];
+        if (Array.isArray(json.properties_results) && json.properties_results.length) {
+            rawItems = json.properties_results;
+        } else if (Array.isArray(json.local_results) && json.local_results.length) {
+            rawItems = json.local_results;
+        } else if (Array.isArray(json.organic_results) && json.organic_results.length) {
+            rawItems = json.organic_results;
+        } else if (Array.isArray(json.inline_images) && json.inline_images.length) {
+            rawItems = json.inline_images;
+        } else {
+            // fallback try items in json
+            rawItems = json.results || [];
+        }
+
+        const normalized = rawItems
+            .map((it) => normalizeAnnonce(it, region))
+            .filter((n) => n.prix > 0 && n.surface > 0) // optional filter
+            .sort((a, b) => b.viabilite - a.viabilite)
+            .slice(0, 50);
+
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.status(200).json(normalized);
+    } catch (err) {
+        console.error("API /api/scrape error:", err);
+        res.status(500).json({ error: true, message: err.message });
+    }
 };
-const btnRun = {
-    marginLeft: 12,
-    padding: "10px 18px",
-    borderRadius: 8,
-    backgroundColor: "#3f6628",
-    color: "white",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold",
-};
-const th = {
-    padding: 10,
-    textAlign: "left",
-    borderBottom: "2px solid #4fa3f7",
-    cursor: "pointer",
-};
-const td = {
-    padding: 10,
-    borderBottom: "1px solid #3b4f7f",
-    verticalAlign: "top",
-};
-const card = {
-    background: "#243b55",
-    border: "1px solid #2e4a7d",
-    borderRadius: 10,
-    padding: 12,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-};
-const link = { color: "#4fa3f7", fontWeight: "bold", display: "inline-block", marginTop: 8 };
