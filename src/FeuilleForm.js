@@ -437,6 +437,11 @@ export default function FeuilleForm() {
                         📈 Statistiques / Progression
                     </button>
 
+                    <button onClick={() => openPage("/scraper")} style={{ background: "#1a2a4f", color: "white", padding: "12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>
+                        🕵️‍♂️ Scraper Immo
+                    </button>
+
+
                     {/* 🆕 Création et Enregistrement */}
                     <button onClick={handleNewFiche} style={btnBlue}>
                         🆕 Créer une nouvelle fiche

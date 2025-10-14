@@ -25,6 +25,7 @@ import MailTypePage from "./MailTypePage";
 import PaiementPage from "./PaiementPage";
 import StatsPage from "./StatsPage"; // ✅ page stats
 import AddFakeData from "./AddFakeData"; // ✅ page import de fiches
+import ScraperImmo from "./ScraperImmo"; // ✅ nouvelle page scraping immo
 
 // Firebase
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -64,7 +65,6 @@ function ProtectedRoute({ children }) {
                     if (data.subscription?.status === "active" && data.subscription?.endDate) {
                         const end = new Date(data.subscription.endDate);
                         const now = new Date();
-
                         setAllowed(end > now);
                     } else {
                         setAllowed(false);
@@ -97,7 +97,7 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
     return (
         <Routes>
-            {/* Pages publiques */}
+            {/* 🟢 Pages publiques */}
             <Route path="/" element={<AccueilPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/manuel" element={<ManuelPage />} />
@@ -106,7 +106,7 @@ function AppRoutes() {
             <Route path="/fiche-preview" element={<FicheClientPreview />} />
             <Route path="/paiement" element={<PaiementPage />} />
 
-            {/* Pages protégées */}
+            {/* 🔒 Pages protégées */}
             <Route
                 path="/Feuille"
                 element={
@@ -155,11 +155,19 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/scraper"
+                element={
+                    <ProtectedRoute>
+                        <ScraperImmo />
+                    </ProtectedRoute>
+                }
+            />
 
-            {/* ✅ Route spéciale : import automatique de 15 fiches de test */}
+            {/* 🧪 Page spéciale : génération de 15 fiches de test */}
             <Route path="/add-fake-data" element={<AddFakeData />} />
 
-            {/* Redirection fallback */}
+            {/* 🧭 Redirection fallback */}
             <Route path="*" element={<Navigate to="/" />} />
         </Routes>
     );
