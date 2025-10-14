@@ -1,8 +1,7 @@
-// src/ScraperImmo.js
 import React, { useMemo, useState } from "react";
 
 export default function ScraperImmo() {
-    const [region, setRegion] = useState("Île-de-France");
+    const [departement, setDepartement] = useState("Rhône");
     const [annonces, setAnnonces] = useState([]);
     const [loading, setLoading] = useState(false);
     const [tri, setTri] = useState({ key: "viabilite", dir: "desc" });
@@ -10,7 +9,7 @@ export default function ScraperImmo() {
     const handleScrape = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/scrape?region=${encodeURIComponent(region)}`);
+            const res = await fetch(`/api/scrape?departement=${encodeURIComponent(departement)}`);
             if (!res.ok) throw new Error("API indisponible");
             const data = await res.json();
             setAnnonces(data);
@@ -50,6 +49,17 @@ export default function ScraperImmo() {
         </th>
     );
 
+    const DEPARTEMENTS = [
+        "Paris", "Yvelines", "Essonne", "Seine-et-Marne", "Hauts-de-Seine",
+        "Val-de-Marne", "Seine-Saint-Denis", "Nord", "Pas-de-Calais",
+        "Loire-Atlantique", "Gironde", "Rhône", "Var", "Bouches-du-Rhône",
+        "Haute-Garonne", "Hérault", "Bas-Rhin", "Isère", "Ain", "Savoie",
+        "Haute-Savoie", "Vaucluse", "Charente-Maritime", "Côte-d’Or",
+        "Dordogne", "Pyrénées-Atlantiques", "Aude", "Gard", "Vienne",
+        "Haute-Loire", "Indre-et-Loire", "Loir-et-Cher", "Corrèze",
+        "Ardèche", "Aube", "Somme", "Moselle", "Aisne", "Marne", "Nièvre",
+    ];
+
     return (
         <div
             style={{
@@ -61,22 +71,19 @@ export default function ScraperImmo() {
             }}
         >
             <h1 style={{ textAlign: "center", color: "#e91e63", marginBottom: 20 }}>
-                🏡 Scraper Immo — Annonces & Opportunités
+                🏡 Scraper Immo — Annonces & Opportunités (par Département)
             </h1>
 
             {/* Contrôles */}
             <div style={{ textAlign: "center", marginBottom: 24 }}>
                 <select
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
+                    value={departement}
+                    onChange={(e) => setDepartement(e.target.value)}
                     style={select}
                 >
-                    <option>Île-de-France</option>
-                    <option>Auvergne-Rhône-Alpes</option>
-                    <option>Provence-Alpes-Côte d’Azur</option>
-                    <option>Centre-Val de Loire</option>
-                    <option>Grand Est</option>
-                    <option>Normandie</option>
+                    {DEPARTEMENTS.map((dep) => (
+                        <option key={dep}>{dep}</option>
+                    ))}
                 </select>
                 <button onClick={handleScrape} disabled={loading} style={btnRun}>
                     {loading ? "🔄 Analyse..." : "🚀 Lancer la recherche"}
@@ -93,20 +100,43 @@ export default function ScraperImmo() {
                         marginBottom: 24,
                     }}
                 >
-                    <h2 style={{ margin: 0, color: "#2ecc71" }}>💎 Opportunités viables (≥ 8/10)</h2>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 12, marginTop: 12 }}>
+                    <h2 style={{ margin: 0, color: "#2ecc71" }}>
+                        💎 Opportunités viables (≥ 8/10)
+                    </h2>
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                                "repeat(auto-fit,minmax(260px,1fr))",
+                            gap: 12,
+                            marginTop: 12,
+                        }}
+                    >
                         {meilleursPlans.map((a, i) => (
                             <div key={i} style={card}>
                                 <div style={{ fontWeight: "bold" }}>{a.titre}</div>
-                                <div style={{ opacity: 0.9 }}>{a.ville}</div>
+                                <div style={{ opacity: 0.9 }}>{a.departement}</div>
                                 <div style={{ marginTop: 6 }}>
                                     <b>{a.prix.toLocaleString()} €</b> — {a.surface} m² —{" "}
                                     <b>{a.prixM2.toLocaleString()} €/m²</b>
                                 </div>
-                                <div style={{ marginTop: 6, color: a.viabilite >= 8 ? "#2ecc71" : "#f1c40f" }}>
+                                <div
+                                    style={{
+                                        marginTop: 6,
+                                        color:
+                                            a.viabilite >= 8
+                                                ? "#2ecc71"
+                                                : "#f1c40f",
+                                    }}
+                                >
                                     Viabilité : {a.viabilite}/10
                                 </div>
-                                <a href={a.lien} target="_blank" rel="noreferrer" style={link}>
+                                <a
+                                    href={a.lien}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={link}
+                                >
                                     Ouvrir l’annonce →
                                 </a>
                             </div>
@@ -118,11 +148,17 @@ export default function ScraperImmo() {
             {/* Tableau complet */}
             {sorted.length > 0 && (
                 <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", color: "#fff" }}>
+                    <table
+                        style={{
+                            width: "100%",
+                            borderCollapse: "collapse",
+                            color: "#fff",
+                        }}
+                    >
                         <thead style={{ background: "#1a2a4f" }}>
                             <tr>
                                 {header("Titre", "titre")}
-                                {header("Ville", "ville")}
+                                {header("Département", "departement")}
                                 {header("Prix (€)", "prix")}
                                 {header("Surface (m²)", "surface")}
                                 {header("€/m²", "prixM2")}
@@ -133,21 +169,42 @@ export default function ScraperImmo() {
                         </thead>
                         <tbody>
                             {sorted.map((a, i) => (
-                                <tr key={i} style={{ background: i % 2 ? "#2b3f66" : "#334c7a" }}>
+                                <tr
+                                    key={i}
+                                    style={{
+                                        background:
+                                            i % 2 ? "#2b3f66" : "#334c7a",
+                                    }}
+                                >
                                     <td style={td}>{a.titre}</td>
-                                    <td style={td}>{a.ville}</td>
+                                    <td style={td}>{a.departement}</td>
                                     <td style={td}>{a.prix.toLocaleString()}</td>
                                     <td style={td}>{a.surface}</td>
                                     <td style={td}>{a.prixM2.toLocaleString()}</td>
-                                    <td style={{ ...td, color: a.viabilite >= 8 ? "#2ecc71" : "#f1c40f" }}>
+                                    <td
+                                        style={{
+                                            ...td,
+                                            color:
+                                                a.viabilite >= 8
+                                                    ? "#2ecc71"
+                                                    : "#f1c40f",
+                                        }}
+                                    >
                                         {a.viabilite}
                                     </td>
                                     <td style={td}>
-                                        <a href={a.lien} target="_blank" rel="noreferrer" style={link}>
+                                        <a
+                                            href={a.lien}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            style={link}
+                                        >
                                             Voir
                                         </a>
                                     </td>
-                                    <td style={{ ...td, opacity: 0.85 }}>{a.source}</td>
+                                    <td style={{ ...td, opacity: 0.85 }}>
+                                        {a.source}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -158,7 +215,8 @@ export default function ScraperImmo() {
             {/* Aide */}
             {sorted.length === 0 && !loading && (
                 <p style={{ textAlign: "center", opacity: 0.85 }}>
-                    ⚠️ Aucun résultat pour l’instant. Choisis une région puis clique “🚀 Lancer la recherche”.
+                    ⚠️ Aucun résultat pour l’instant. Choisis un département puis
+                    clique “🚀 Lancer la recherche”.
                 </p>
             )}
         </div>
@@ -201,4 +259,9 @@ const card = {
     padding: 12,
     boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
 };
-const link = { color: "#4fa3f7", fontWeight: "bold", display: "inline-block", marginTop: 8 };
+const link = {
+    color: "#4fa3f7",
+    fontWeight: "bold",
+    display: "inline-block",
+    marginTop: 8,
+};
