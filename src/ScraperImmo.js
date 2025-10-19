@@ -1,23 +1,4 @@
 
-/*
-Environment variables (Vercel):
-- APIFY_TOKEN = ********
-- DEFAULT_PROVIDER = seloger (or bienici)
-Optional (recommend to use TASKs you pre-configure at Apify with filters):
-- APIFY_SELOGER_TASK_ID = <your-task-id>
-- APIFY_BIENICI_TASK_ID = <your-task-id>
-If you prefer ACTORs directly:
-- APIFY_SELOGER_ACTOR_ID = lexis-solutions/seloger-scraper (example)
-- APIFY_BIENICI_ACTOR_ID = qpayre/bien-ici-scraper (example)
-*/
-
-/* =========================================================
-   2) pages/index.js – UI
-   ---------------------------------------------------------
-   Clean UI with department selector, filters, sortable table, badges.
-========================================================= */
-
-// pages/index.js
 import { useMemo, useState } from 'react';
 
 const DEPARTEMENTS = Object.keys({
