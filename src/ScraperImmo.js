@@ -39,7 +39,7 @@ export default function Home() {
     if (max) params.set('max', String(max));
     if (piecesMin) params.set('piecesMin', String(piecesMin));
     try {
-      const r = await fetch(`/api/Scrape?${params.toString()}`);
+      const r = await fetch(`/api/scrape?${params.toString()}`);
       if (!r.ok) throw new Error('API indisponible');
       const j = await r.json();
       setData(j);
