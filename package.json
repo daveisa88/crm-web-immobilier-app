@@ -18,7 +18,7 @@
     "jspdf": "^3.0.3",
     "node-fetch": "^3.3.2",
     "openai": "^5.23.1",
-    "pdfjs-dist": "^2.16.105",
+    "pdfjs-dist": "^4.2.67",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.1",
