@@ -59,22 +59,22 @@ export default function ScraperImmo() {
 
     // === Liste complète des départements ===
     const DEPARTEMENTS = [
-        "Ain","Aisne","Allier","Alpes-de-Haute-Provence","Hautes-Alpes","Alpes-Maritimes",
-        "Ardèche","Ardennes","Ariège","Aube","Aude","Aveyron","Bas-Rhin","Haut-Rhin",
-        "Bouches-du-Rhône","Calvados","Cantal","Charente","Charente-Maritime","Cher",
-        "Corrèze","Corse-du-Sud","Haute-Corse","Côte-d'Or","Côtes-d'Armor","Creuse",
-        "Deux-Sèvres","Dordogne","Doubs","Drôme","Eure","Eure-et-Loir","Finistère",
-        "Gard","Haute-Garonne","Gers","Gironde","Hérault","Ille-et-Vilaine","Indre",
-        "Indre-et-Loire","Isère","Jura","Landes","Loir-et-Cher","Loire","Haute-Loire",
-        "Loire-Atlantique","Loiret","Lot","Lot-et-Garonne","Lozère","Maine-et-Loire",
-        "Manche","Marne","Haute-Marne","Mayenne","Meurthe-et-Moselle","Meuse",
-        "Morbihan","Moselle","Nièvre","Nord","Oise","Orne","Pas-de-Calais","Puy-de-Dôme",
-        "Pyrénées-Atlantiques","Hautes-Pyrénées","Pyrénées-Orientales","Rhône",
-        "Haute-Saône","Saône-et-Loire","Sarthe","Savoie","Haute-Savoie","Paris",
-        "Seine-Maritime","Seine-et-Marne","Yvelines","Somme","Tarn","Tarn-et-Garonne",
-        "Var","Vaucluse","Vendée","Vienne","Haute-Vienne","Vosges","Yonne",
-        "Territoire de Belfort","Essonne","Hauts-de-Seine","Seine-Saint-Denis",
-        "Val-de-Marne","Val-d'Oise"
+        "Ain", "Aisne", "Allier", "Alpes-de-Haute-Provence", "Hautes-Alpes", "Alpes-Maritimes",
+        "Ardèche", "Ardennes", "Ariège", "Aube", "Aude", "Aveyron", "Bas-Rhin", "Haut-Rhin",
+        "Bouches-du-Rhône", "Calvados", "Cantal", "Charente", "Charente-Maritime", "Cher",
+        "Corrèze", "Corse-du-Sud", "Haute-Corse", "Côte-d'Or", "Côtes-d'Armor", "Creuse",
+        "Deux-Sèvres", "Dordogne", "Doubs", "Drôme", "Eure", "Eure-et-Loir", "Finistère",
+        "Gard", "Haute-Garonne", "Gers", "Gironde", "Hérault", "Ille-et-Vilaine", "Indre",
+        "Indre-et-Loire", "Isère", "Jura", "Landes", "Loir-et-Cher", "Loire", "Haute-Loire",
+        "Loire-Atlantique", "Loiret", "Lot", "Lot-et-Garonne", "Lozère", "Maine-et-Loire",
+        "Manche", "Marne", "Haute-Marne", "Mayenne", "Meurthe-et-Moselle", "Meuse",
+        "Morbihan", "Moselle", "Nièvre", "Nord", "Oise", "Orne", "Pas-de-Calais", "Puy-de-Dôme",
+        "Pyrénées-Atlantiques", "Hautes-Pyrénées", "Pyrénées-Orientales", "Rhône",
+        "Haute-Saône", "Saône-et-Loire", "Sarthe", "Savoie", "Haute-Savoie", "Paris",
+        "Seine-Maritime", "Seine-et-Marne", "Yvelines", "Somme", "Tarn", "Tarn-et-Garonne",
+        "Var", "Vaucluse", "Vendée", "Vienne", "Haute-Vienne", "Vosges", "Yonne",
+        "Territoire de Belfort", "Essonne", "Hauts-de-Seine", "Seine-Saint-Denis",
+        "Val-de-Marne", "Val-d'Oise"
     ];
 
     return (
@@ -144,8 +144,8 @@ export default function ScraperImmo() {
                                                 a.viabilite >= 8
                                                     ? "#2ecc71"
                                                     : a.viabilite >= 5
-                                                    ? "#f1c40f"
-                                                    : "#e74c3c",
+                                                        ? "#f1c40f"
+                                                        : "#e74c3c",
                                             fontWeight: "bold",
                                         }}
                                     >
