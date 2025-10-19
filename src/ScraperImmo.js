@@ -1,9 +1,4 @@
-/*
-{error && <p style={{ color:'#ff7675', textAlign:'center' }}>❌ {error}</p>}
-
-
-{annonces.length>0 && (
-<div style={{ overflowX: 'auto' }}>
+// pages/index.js
 <table style={table}>
 <thead style={thead}>
 <tr>
@@ -57,23 +52,3 @@ const thead = { background:'#1a2a4f' };
 const th = { padding:10, cursor:'pointer', borderBottom:'2px solid #4fa3f7', textAlign:'left' };
 const td = { padding:10, borderBottom:'1px solid #3b4f7f', verticalAlign:'top' };
 const link = { color:'#4fa3f7', fontWeight:'bold', textDecoration:'none' };
-
-
-/* =========================================================
-3) README (quick)
----------------------------------------------------------
-1. Créez un compte Apify et ajoutez des Actors/Tasks pour SeLoger/Bien'ici
-- Exemple d'Actor: lexis-solutions/seloger-scraper (Store)
-- Exemple d'Actor: qpayre/bien-ici-scraper (Store)
-- Configurez les filtres (vente/location, départements) et sauvegardez en TASK.
-2. Dans Vercel > Settings > Environment Variables
-- APIFY_TOKEN
-- DEFAULT_PROVIDER = seloger (ou bienici)
-- APIFY_SELOGER_TASK_ID, APIFY_BIENICI_TASK_ID (recommandé)
-- ou bien APIFY_SELOGER_ACTOR_ID, APIFY_BIENICI_ACTOR_ID
-3. Déployez. Ouvrez /. Réglez le département, lancez.
-
-
-Conformité & ToS: Vous ne scrapez pas vous-même les portails; vous consommez une API d'une plateforme tierce (Apify) qui fournit des connecteurs.
-Les prix de marché proviennent de la DVF (open data Étalab).
-========================================================= */
