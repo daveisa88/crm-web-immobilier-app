@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from "react";
 
+// ======================================================
+// 🏡 Scraper Immo Pro — Front (React) + Back (/api/scrape)
+// ======================================================
+
 export default function ScraperImmo() {
     const [departement, setDepartement] = useState("Rhône");
     const [annonces, setAnnonces] = useState([]);
@@ -8,6 +12,9 @@ export default function ScraperImmo() {
     const [tri, setTri] = useState({ key: "viabilite", dir: "desc" });
     const [error, setError] = useState(null);
 
+    // === Nouvelle constante provider ===
+    const [provider] = useState("seloger");
+
     // === Lancer la recherche ===
     const handleScrape = async () => {
         setLoading(true);
@@ -15,13 +22,12 @@ export default function ScraperImmo() {
         setError(null);
 
         try {
-            // ✅ Appel API corrigé (backend Apify + DVF)
-            const res = await fetch(`/api/scrape?departement=${encodeURIComponent(departement)}&provider=seloger`);
+            const res = await fetch(
+                `/api/scrape?departement=${encodeURIComponent(departement)}&provider=${provider}`
+            );
             if (!res.ok) throw new Error("API indisponible ou quota atteint");
-
             const data = await res.json();
             if (data.error) throw new Error(data.message);
-
             setAnnonces(data.annonces || []);
             setMedian(data.medianRef || null);
         } catch (err) {
@@ -57,7 +63,7 @@ export default function ScraperImmo() {
         </th>
     );
 
-    // === Liste complète des départements ===
+    // === Liste des départements ===
     const DEPARTEMENTS = [
         "Ain", "Aisne", "Allier", "Alpes-de-Haute-Provence", "Hautes-Alpes", "Alpes-Maritimes",
         "Ardèche", "Ardennes", "Ariège", "Aube", "Aude", "Aveyron", "Bas-Rhin", "Haut-Rhin",
@@ -80,7 +86,9 @@ export default function ScraperImmo() {
     return (
         <div style={page}>
             {/* === Titre principal === */}
-            <h1 style={title}>🏡 Scraper Immo Pro — France</h1>
+            <h1 style={title}>
+                🏡 Scraper Immo Pro — France
+            </h1>
 
             {/* === Zone de recherche === */}
             <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -90,9 +98,12 @@ export default function ScraperImmo() {
                     style={select}
                 >
                     {DEPARTEMENTS.map((dep) => (
-                        <option key={dep} value={dep}>{dep}</option>
+                        <option key={dep} value={dep}>
+                            {dep}
+                        </option>
                     ))}
                 </select>
+
                 <button onClick={handleScrape} disabled={loading} style={btnRun}>
                     {loading ? "🔄 Analyse en cours..." : "🚀 Lancer"}
                 </button>
@@ -101,7 +112,7 @@ export default function ScraperImmo() {
             {/* === Prix médian marché === */}
             {median && (
                 <p style={medianText}>
-                    📊 Prix médian marché (DVF) pour <b>{departement}</b> :{" "}
+                    📊 Prix médian marché (Etalab) pour <b>{departement}</b> :{" "}
                     <b>{median.toLocaleString()} €/m²</b>
                 </p>
             )}
@@ -131,7 +142,12 @@ export default function ScraperImmo() {
                         </thead>
                         <tbody>
                             {sorted.map((a, i) => (
-                                <tr key={i} style={{ background: i % 2 ? "#2b3f66" : "#334c7a" }}>
+                                <tr
+                                    key={i}
+                                    style={{
+                                        background: i % 2 ? "#2b3f66" : "#334c7a",
+                                    }}
+                                >
                                     <td style={td}>{a.titre}</td>
                                     <td style={td}>{a.ville}</td>
                                     <td style={td}>{a.prix?.toLocaleString()}</td>
