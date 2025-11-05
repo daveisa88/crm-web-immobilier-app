@@ -1,35 +1,35 @@
 import React, { useMemo, useState } from "react";
 
-// ======================================================
-// 🏡 Scraper Immo Pro — Front (React) + Back (/api/scrape)
-// ======================================================
-
 export default function ScraperImmo() {
     const [departement, setDepartement] = useState("Rhône");
+    const [site, setSite] = useState("seloger");
+    const [prixMin, setPrixMin] = useState(20000);
+    const [prixMax, setPrixMax] = useState(800000);
+    const [piecesMin, setPiecesMin] = useState(1);
+    const [piecesMax, setPiecesMax] = useState(5);
+    const [surfaceMin, setSurfaceMin] = useState(20);
+    const [terrain, setTerrain] = useState("indifférent");
+    const [chauffage, setChauffage] = useState("indifférent");
+    const [travaux, setTravaux] = useState("indifférent");
+
     const [annonces, setAnnonces] = useState([]);
     const [median, setMedian] = useState(null);
     const [loading, setLoading] = useState(false);
     const [tri, setTri] = useState({ key: "viabilite", dir: "desc" });
     const [error, setError] = useState(null);
 
-    // === Nouvelle constante provider ===
-    const [provider] = useState("seloger");
-
-    // === Lancer la recherche ===
     const handleScrape = async () => {
         setLoading(true);
         setAnnonces([]);
         setError(null);
 
+        const url = `/api/recherche?departement=${encodeURIComponent(departement)}&site=${site}&prixMin=${prixMin}&prixMax=${prixMax}&piecesMin=${piecesMin}&piecesMax=${piecesMax}&surfaceMin=${surfaceMin}&terrain=${terrain}&chauffage=${chauffage}&travaux=${travaux}`;
+
         try {
-            const res = await fetch(
-                `/api/scrape?departement=${encodeURIComponent(departement)}&provider=${provider}`
-            );
+            const res = await fetch(url);
             if (!res.ok) throw new Error("API indisponible ou quota atteint");
             const data = await res.json();
-            if (data.error) throw new Error(data.message);
             setAnnonces(data.annonces || []);
-            setMedian(data.medianRef || null);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -37,7 +37,6 @@ export default function ScraperImmo() {
         }
     };
 
-    // === Tri dynamique ===
     const sorted = useMemo(() => {
         const arr = [...annonces];
         const { key, dir } = tri;
@@ -63,7 +62,6 @@ export default function ScraperImmo() {
         </th>
     );
 
-    // === Liste des départements ===
     const DEPARTEMENTS = [
         "Ain", "Aisne", "Allier", "Alpes-de-Haute-Provence", "Hautes-Alpes", "Alpes-Maritimes",
         "Ardèche", "Ardennes", "Ariège", "Aube", "Aude", "Aveyron", "Bas-Rhin", "Haut-Rhin",
@@ -83,175 +81,63 @@ export default function ScraperImmo() {
         "Val-de-Marne", "Val-d'Oise"
     ];
 
+    const SITES = [
+        { label: "SeLoger", value: "seloger" },
+        { label: "LeBonCoin", value: "leboncoin" },
+        { label: "BienIci", value: "bienici" },
+        { label: "PAP", value: "pap" },
+        { label: "Logic-Immo", value: "logic-immo" }
+    ];
+
     return (
         <div style={page}>
-            {/* === Titre principal === */}
-            <h1 style={title}>
-                🏡 Scraper Immo Pro — France
-            </h1>
+            <h1 style={title}>🏡 Scraper Immo Pro — France</h1>
 
-            {/* === Zone de recherche === */}
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-                <select
-                    value={departement}
-                    onChange={(e) => setDepartement(e.target.value)}
-                    style={select}
-                >
+            {/* Ligne 1 */}
+            <div style={row}>
+                <select value={departement} onChange={(e) => setDepartement(e.target.value)} style={select}>
                     {DEPARTEMENTS.map((dep) => (
-                        <option key={dep} value={dep}>
-                            {dep}
-                        </option>
+                        <option key={dep} value={dep}>{dep}</option>
                     ))}
                 </select>
 
-                <button onClick={handleScrape} disabled={loading} style={btnRun}>
-                    {loading ? "🔄 Analyse en cours..." : "🚀 Lancer"}
-                </button>
+                <select value={site} onChange={(e) => setSite(e.target.value)} style={select}>
+                    {SITES.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                </select>
+
+                <input type="number" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} style={input} placeholder="Prix min" />
+                <input type="number" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} style={input} placeholder="Prix max" />
             </div>
 
-            {/* === Prix médian marché === */}
-            {median && (
-                <p style={medianText}>
-                    📊 Prix médian marché (Etalab) pour <b>{departement}</b> :{" "}
-                    <b>{median.toLocaleString()} €/m²</b>
-                </p>
-            )}
+            {/* Ligne 2 */}
+            <div style={row}>
+                <input type="number" value={piecesMin} onChange={(e) => setPiecesMin(e.target.value)} style={input} placeholder="Pièces min" />
+                <input type="number" value={piecesMax} onChange={(e) => setPiecesMax(e.target.value)} style={input} placeholder="Pièces max" />
+                <input type="number" value={surfaceMin} onChange={(e) => setSurfaceMin(e.target.value)} style={input} placeholder="Surface min m²" />
 
-            {/* === Message d’erreur === */}
-            {error && (
-                <p style={{ textAlign: "center", color: "#e74c3c", marginBottom: 20 }}>
-                    ❌ {error}
-                </p>
-            )}
+                <select value={terrain} onChange={(e) => setTerrain(e.target.value)} style={select}>
+                    <option value="indifférent">Terrain ?</option>
+                    <option value="oui">Oui</option>
+                    <option value="non">Non</option>
+                </select>
 
-            {/* === Tableau des résultats === */}
-            {sorted.length > 0 ? (
-                <div style={{ overflowX: "auto" }}>
-                    <table style={table}>
-                        <thead style={thead}>
-                            <tr>
-                                {header("Titre", "titre")}
-                                {header("Ville", "ville")}
-                                {header("Prix (€)", "prix")}
-                                {header("Surface (m²)", "surface")}
-                                {header("€/m²", "prixM2")}
-                                {header("Viabilité", "viabilite")}
-                                <th style={th}>Lien</th>
-                                <th style={th}>Source</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sorted.map((a, i) => (
-                                <tr
-                                    key={i}
-                                    style={{
-                                        background: i % 2 ? "#2b3f66" : "#334c7a",
-                                    }}
-                                >
-                                    <td style={td}>{a.titre}</td>
-                                    <td style={td}>{a.ville}</td>
-                                    <td style={td}>{a.prix?.toLocaleString()}</td>
-                                    <td style={td}>{a.surface}</td>
-                                    <td style={td}>{a.prixM2?.toLocaleString()}</td>
-                                    <td
-                                        style={{
-                                            ...td,
-                                            color:
-                                                a.viabilite >= 8
-                                                    ? "#2ecc71"
-                                                    : a.viabilite >= 5
-                                                        ? "#f1c40f"
-                                                        : "#e74c3c",
-                                            fontWeight: "bold",
-                                        }}
-                                    >
-                                        {a.viabilite}
-                                    </td>
-                                    <td style={td}>
-                                        <a
-                                            href={a.lien}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            style={link}
-                                        >
-                                            🔗 Voir
-                                        </a>
-                                    </td>
-                                    <td style={{ ...td, opacity: 0.85 }}>{a.source}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                !loading &&
-                !error && (
-                    <p style={{ textAlign: "center", opacity: 0.8 }}>
-                        ⚠️ Aucun résultat pour l’instant. Choisis un département puis clique “🚀 Lancer”.
-                    </p>
-                )
-            )}
-        </div>
-    );
-}
+                <select value={chauffage} onChange={(e) => setChauffage(e.target.value)} style={select}>
+                    <option value="indifférent">Chauffage</option>
+                    <option value="gaz">Gaz</option>
+                    <option value="elec">Électrique</option>
+                    <option value="bois">Bois</option>
+                    <option value="pac">Pompe à chaleur</option>
+                </select>
 
-// === Styles ===
-const page = {
-    backgroundColor: "#243b55",
-    color: "white",
-    minHeight: "100vh",
-    padding: "40px",
-    fontFamily: "Segoe UI",
-};
-const title = {
-    textAlign: "center",
-    color: "#e91e63",
-    marginBottom: 20,
-};
-const select = {
-    padding: "10px 16px",
-    borderRadius: 8,
-    fontSize: 16,
-    background: "#4fa3f7",
-    color: "white",
-    border: "none",
-};
-const btnRun = {
-    marginLeft: 12,
-    padding: "10px 18px",
-    borderRadius: 8,
-    backgroundColor: "#3f6628",
-    color: "white",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold",
-};
-const table = {
-    width: "100%",
-    borderCollapse: "collapse",
-    color: "#fff",
-    marginTop: 20,
-};
-const thead = { background: "#1a2a4f" };
-const th = {
-    padding: 10,
-    textAlign: "left",
-    borderBottom: "2px solid #4fa3f7",
-    cursor: "pointer",
-};
-const td = {
-    padding: 10,
-    borderBottom: "1px solid #3b4f7f",
-    verticalAlign: "top",
-};
-const link = {
-    color: "#4fa3f7",
-    fontWeight: "bold",
-    textDecoration: "none",
-};
-const medianText = {
-    textAlign: "center",
-    color: "#f1c40f",
-    fontWeight: "bold",
-    fontSize: 18,
-};
+                <select value={travaux} onChange={(e) => setTravaux(e.target.value)} style={select}>
+                    <option value="indifférent">Travaux</option>
+                    <option value="oui">Oui</option>
+                    <option value="non">Non</option>
+                </select>
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: 15 }}>
+                <button onClick={handleScrape} disabled={loading} style={btnRun}>
+                    {loading ? "🔄 Analyse en cours..."
