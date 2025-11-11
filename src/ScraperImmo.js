@@ -1,7 +1,6 @@
-console.log("Scraper UI version 1.4.3");
-
 import React, { useMemo, useState } from "react";
 
+console.log("Scraper UI version 1.4.2");
 export default function ScraperImmo() {
     const [departement, setDepartement] = useState("Rhône");
     const [site, setSite] = useState("seloger");
