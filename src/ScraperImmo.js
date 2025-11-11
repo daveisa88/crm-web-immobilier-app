@@ -1,3 +1,6 @@
+console.log("Scraper UI version 1.4.2");
+
+
 import React, { useMemo, useState } from "react";
 
 export default function ScraperImmo() {
