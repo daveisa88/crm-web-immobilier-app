@@ -1,10 +1,12 @@
 // src/ScraperImmo.js
-import React, { useMemo, useState } from "react";
+console.log("Scraper UI version 1.5 Google Search Edition");
+
+import React, { useState } from "react";
 
 export default function ScraperImmo() {
   // ------- Filtres -------
-  const [departement, setDepartement] = useState("Rhône");
-  const [site, setSite] = useState("seloger");
+  const [departement, setDepartement] = useState("Haute-Marne");
+  const [site, setSite] = useState("leboncoin");
   const [prixMin, setPrixMin] = useState(20000);
   const [prixMax, setPrixMax] = useState(800000);
   const [piecesMin, setPiecesMin] = useState(1);
@@ -14,72 +16,52 @@ export default function ScraperImmo() {
   const [chauffage, setChauffage] = useState("indifférent");
   const [travaux, setTravaux] = useState("indifférent");
 
-  // ------- Données -------
-  const [annonces, setAnnonces] = useState([]);
-  const [median, setMedian] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [tri, setTri] = useState({ key: "viabilite", dir: "desc" });
-  const [error, setError] = useState(null);
+  // ------- NOUVEAU : Recherche Google -------
+  const handleSearchGoogle = () => {
+    const tokens = [];
 
-  // ------- Lancer la recherche -------
-  const handleScrape = async () => {
-    setLoading(true);
-    setError(null);
-    setAnnonces([]);
+    // Département
+    if (departement) tokens.push(`"${departement}"`);
 
-    const url =
-      `/api/recherche?` +
-      new URLSearchParams({
-        departement,
-        site,
-        prixMin,
-        prixMax,
-        piecesMin,
-        piecesMax,
-        surfaceMin,
-        terrain,
-        chauffage,
-        travaux,
-      }).toString();
+    // Domaine selon le site sélectionné
+    const siteDomains = {
+      seloger: "site:seloger.com",
+      leboncoin: "site:leboncoin.fr",
+      bienici: "site:bienici.com",
+      pap: "site:pap.fr",
+      "logic-immo": "site:logic-immo.com",
+    };
+    tokens.push(siteDomains[site] || "");
 
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("API indisponible ou quota atteint");
-      const data = await res.json();
-      setAnnonces(data.annonces || []);
-      setMedian(data.medianRef ?? null);
-    } catch (e) {
-      setError(e.message || "Erreur inconnue");
-    } finally {
-      setLoading(false);
+    // Type de bien
+    tokens.push("maison");
+
+    // Filtres texte
+    tokens.push(`${piecesMin}-${piecesMax} pièces`);
+    tokens.push(`${surfaceMin}m²`);
+    tokens.push(`${prixMin}-${prixMax}€`);
+
+    if (terrain === "oui") tokens.push("terrain");
+    if (travaux === "oui") tokens.push("à rénover");
+
+    const chauffageLabel = {
+      gaz: "gaz",
+      elec: "électrique",
+      bois: "bois",
+      pac: "pompe à chaleur",
+    };
+    if (chauffage !== "indifférent") {
+      tokens.push(chauffageLabel[chauffage] || chauffage);
     }
+
+    // Exclusion location / non vente
+    tokens.push("-location -louer -colocation");
+
+    const googleQuery = tokens.filter(Boolean).join(" ");
+    const url = `https://www.google.com/search?q=${encodeURIComponent(googleQuery)}`;
+
+    window.open(url, "_blank");
   };
-
-  // ------- Tri dynamique -------
-  const sorted = useMemo(() => {
-    const arr = [...annonces];
-    const { key, dir } = tri;
-    const mul = dir === "asc" ? 1 : -1;
-    arr.sort((a, b) => {
-      if (typeof a[key] === "string") return a[key].localeCompare(b[key]) * mul;
-      return ((a[key] ?? 0) - (b[key] ?? 0)) * mul;
-    });
-    return arr;
-  }, [annonces, tri]);
-
-  const header = (label, key) => (
-    <th
-      style={th}
-      onClick={() =>
-        setTri((t) => ({
-          key,
-          dir: t.key === key && t.dir === "desc" ? "asc" : "desc",
-        }))
-      }
-    >
-      {label} {tri.key === key ? (tri.dir === "asc" ? "▲" : "▼") : ""}
-    </th>
-  );
 
   const SITES = [
     { label: "SeLoger", value: "seloger" },
@@ -110,69 +92,53 @@ export default function ScraperImmo() {
 
   return (
     <div style={page}>
-      <h1 style={title}>🏡 Scraper Immo Pro — France</h1>
+      <h1 style={title}>🏡 Recherche Immo Pro — Google</h1>
 
       <div style={panel}>
+        {/* Ligne 1 */}
         <div style={row}>
           <div style={col}>
             <label style={label}>Département</label>
-            <select
-              value={departement}
-              onChange={(e) => setDepartement(e.target.value)}
-              style={select}
-            >
-              {DEPARTEMENTS.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
+            <select value={departement} onChange={(e) => setDepartement(e.target.value)} style={select}>
+              {DEPARTEMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-
           <div style={col}>
             <label style={label}>Site</label>
             <select value={site} onChange={(e) => setSite(e.target.value)} style={select}>
-              {SITES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
+              {SITES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
         </div>
 
+        {/* Ligne 2 */}
         <div style={row}>
           <div style={col}>
             <label style={label}>Prix min (€)</label>
-            <input type="number" min={0} value={prixMin}
-              onChange={(e) => setPrixMin(e.target.value)} style={input}
-              placeholder="ex: 20000" />
+            <input type="number" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} style={input} />
           </div>
           <div style={col}>
             <label style={label}>Prix max (€)</label>
-            <input type="number" min={0} value={prixMax}
-              onChange={(e) => setPrixMax(e.target.value)} style={input}
-              placeholder="ex: 800000" />
+            <input type="number" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} style={input} />
           </div>
           <div style={col}>
             <label style={label}>Pièces min</label>
-            <input type="number" min={1} value={piecesMin}
-              onChange={(e) => setPiecesMin(e.target.value)} style={input}
-              placeholder="ex: 1" />
+            <input type="number" value={piecesMin} onChange={(e) => setPiecesMin(e.target.value)} style={input} />
           </div>
           <div style={col}>
             <label style={label}>Pièces max</label>
-            <input type="number" min={1} value={piecesMax}
-              onChange={(e) => setPiecesMax(e.target.value)} style={input}
-              placeholder="ex: 5" />
+            <input type="number" value={piecesMax} onChange={(e) => setPiecesMax(e.target.value)} style={input} />
           </div>
           <div style={col}>
             <label style={label}>Surface min (m²)</label>
-            <input type="number" min={0} value={surfaceMin}
-              onChange={(e) => setSurfaceMin(e.target.value)} style={input}
-              placeholder="ex: 20" />
+            <input type="number" value={surfaceMin} onChange={(e) => setSurfaceMin(e.target.value)} style={input} />
           </div>
         </div>
 
+        {/* Ligne 3 */}
         <div style={row}>
           <div style={col}>
-            <label style={label}>Terrain ?</label>
+            <label style={label}>Terrain</label>
             <select value={terrain} onChange={(e) => setTerrain(e.target.value)} style={select}>
               <option value="indifférent">Indifférent</option>
               <option value="oui">Oui</option>
@@ -199,69 +165,10 @@ export default function ScraperImmo() {
           </div>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 14 }}>
-          <button onClick={handleScrape} disabled={loading} style={btnRun}>
-            {loading ? "🔄 Analyse en cours..." : "🚀 Lancer"}
-          </button>
+        <div style={{ textAlign: "center", marginTop: 18 }}>
+          <button onClick={handleSearchGoogle} style={btnRun}>🔍 Rechercher sur Google</button>
         </div>
       </div>
-
-      {median ? (
-        <p style={medianText}>
-          📊 Prix médian marché (DVF) pour <b>{departement}</b> : <b>{median.toLocaleString()} €/m²</b>
-        </p>
-      ) : null}
-
-      {error ? (
-        <p style={{ textAlign: "center", color: "#e74c3c", marginTop: 12 }}>
-          ❌ {error}
-        </p>
-      ) : null}
-
-      {sorted.length > 0 ? (
-        <div style={{ overflowX: "auto", marginTop: 10 }}>
-          <table style={table}>
-            <thead style={thead}>
-              <tr>
-                {header("Titre", "titre")}
-                {header("Ville", "ville")}
-                {header("Prix (€)", "prix")}
-                {header("Surface (m²)", "surface")}
-                {header("€/m²", "prixM2")}
-                {header("Viabilité", "viabilite")}
-                <th style={th}>Lien</th>
-                <th style={th}>Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((a, i) => (
-                <tr key={i} style={{ background: i % 2 ? "#2b3f66" : "#334c7a" }}>
-                  <td style={td}>{a.titre}</td>
-                  <td style={td}>{a.ville}</td>
-                  <td style={td}>{a.prix?.toLocaleString()}</td>
-                  <td style={td}>{a.surface}</td>
-                  <td style={td}>{a.prixM2?.toLocaleString()}</td>
-                  <td style={{
-                    ...td,
-                    color: a.viabilite >= 8 ? "#2ecc71" : a.viabilite >= 5 ? "#f1c40f" : "#e74c3c",
-                    fontWeight: "bold",
-                  }}>
-                    {a.viabilite}
-                  </td>
-                  <td style={td}>
-                    <a href={a.lien} target="_blank" rel="noreferrer" style={link}>🔗 Voir</a>
-                  </td>
-                  <td style={{ ...td, opacity: 0.85 }}>{a.source}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : !loading && !error ? (
-        <p style={{ textAlign: "center", opacity: 0.8, marginTop: 10 }}>
-          ⚠️ Aucun résultat pour l’instant. Choisis tes filtres puis clique “🚀 Lancer”.
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -269,16 +176,10 @@ export default function ScraperImmo() {
 /* ===== Styles ===== */
 const page = { backgroundColor: "#243b55", color: "white", minHeight: "100vh", padding: 40, fontFamily: "Segoe UI" };
 const title = { textAlign: "center", color: "#e91e63", marginBottom: 14 };
-const panel = { background: "#1e3150", padding: 16, borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,.25)", maxWidth: 1200, margin: "0 auto" };
+const panel = { background: "#1e3150", padding: 16, borderRadius: 12, maxWidth: 1200, margin: "0 auto" };
 const row = { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 10 };
-const col = { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 };
+const col = { display: "flex", flexDirection: "column", gap: 6 };
 const label = { fontSize: 13, opacity: 0.9 };
 const select = { padding: "10px 12px", borderRadius: 8, fontSize: 14, background: "#4fa3f7", color: "white", border: "none" };
 const input = { padding: "10px 12px", borderRadius: 8, fontSize: 14, background: "#2d446a", color: "white", border: "1px solid #3b4f7f" };
-const btnRun = { padding: "10px 18px", borderRadius: 8, backgroundColor: "#3f6628", color: "white", border: "none", cursor: "pointer", fontWeight: "bold" };
-const table = { width: "100%", borderCollapse: "collapse", color: "#fff", marginTop: 16 };
-const thead = { background: "#1a2a4f" };
-const th = { padding: 10, textAlign: "left", borderBottom: "2px solid #4fa3f7", cursor: "pointer", whiteSpace: "nowrap" };
-const td = { padding: 10, borderBottom: "1px solid #3b4f7f", verticalAlign: "top" };
-const link = { color: "#4fa3f7", fontWeight: "bold", textDecoration: "none" };
-const medianText = { textAlign: "center", color: "#f1c40f", fontWeight: "bold", fontSize: 16, marginTop: 10 };
+const btnRun = { padding: "12px 22px", borderRadius: 8, backgroundColor: "#3f6628", color: "white", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 16 };
