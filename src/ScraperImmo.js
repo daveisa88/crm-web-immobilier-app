@@ -23,56 +23,79 @@ export default function ScraperImmo() {
   const [travaux, setTravaux] = useState("indifférent");
 
   // ------- Construction de la requête Google (mémoïsée) -------
-  const buildGoogleQuery = useCallback(() => {
-    const tokens = [];
+ const buildGoogleQuery = useCallback(() => {
+  const tokens = [];
 
-    // Domaine(s)
-    const domains = DOMAINS[site] || [];
-    if (domains.length) tokens.push(`(${domains.map((d) => `site:${d}`).join(" OR ")})`);
+  // --- Domaine(s)
+  const domains = DOMAINS[site] || [];
+  if (domains.length) {
+    tokens.push(`(${domains.map((d) => `site:${d}`).join(" OR ")})`);
+  }
 
-    // Localisation
-    tokens.push(`"${departement}"`);
+  // --- Spécifique Leboncoin: cibler ventes immo et éviter la location
+  if (site === "leboncoin") {
+    tokens.push("inurl:/ventes_immobilieres/");
+    tokens.push("-location -louer -colocation -viager");
+  } else {
+    // filtre locatif générique
+    tokens.push("-location -louer");
+  }
 
-    // Prix
-    if (prixMin) tokens.push(`${prixMin}€..`);
-    if (prixMax) tokens.push(`..${prixMax}€`);
-    tokens.push("(prix OR €)");
+  // --- Localisation (éviter les guillemets stricts)
+  tokens.push(departement);
 
-    // Pièces
-    if (piecesMin || piecesMax) {
-      if (piecesMin && piecesMax) tokens.push(`"${piecesMin}-${piecesMax} pièces"`);
-      else if (piecesMin) tokens.push(`"${piecesMin} pièces"`);
-      else if (piecesMax) tokens.push(`"${piecesMax} pièces"`);
-    }
+  // --- Prix (intervalle numérique sans €)
+  if (prixMin || prixMax) {
+    const min = Number.isFinite(prixMin) ? prixMin : "";
+    const max = Number.isFinite(prixMax) ? prixMax : "";
+    if (min !== "" || max !== "") tokens.push(`${min}..${max}`);
+  }
+  // Aide lexical pour le contexte prix
+  tokens.push("(prix OR € OR euros)");
 
-    // Surface
-    if (surfaceMin) {
-      tokens.push(`(${surfaceMin}m² OR "surface ${surfaceMin}m²" OR ">= ${surfaceMin} m²")`);
-    }
+  // --- Pièces (OR pour chaque valeur + synonymes T/F)
+  const pieceLabels = [];
+  const pMin = Math.max(1, piecesMin || 0);
+  const pMax = Math.max(pMin, piecesMax || pMin);
+  for (let p = pMin; p <= pMax; p++) {
+    pieceLabels.push(`"${p} pièces"`);
+    pieceLabels.push(`T${p}`);
+    pieceLabels.push(`F${p}`);
+  }
+  if (pieceLabels.length) tokens.push(`(${pieceLabels.join(" OR ")})`);
 
-    // Terrain ?
-    if (terrain === "oui") tokens.push("(terrain OR parcelle OR jardin)");
-    if (terrain === "non") tokens.push("-(terrain OR jardin)");
+  // --- Surface: variantes m² / m2 / m
+  if (surfaceMin) {
+    const s = surfaceMin;
+    tokens.push(
+      `(("${s} m²" OR "${s}m²" OR "${s} m2" OR "${s}m2" OR ">= ${s} m²" OR ">= ${s} m2") OR (surface ${s}))`
+    );
+  }
 
-    // Chauffage
-    if (chauffage !== "indifférent") {
-      const map = { gaz: "gaz", elec: "électrique", bois: "bois", pac: `"pompe à chaleur"` };
-      tokens.push(`(${map[chauffage] || chauffage})`);
-    }
+  // --- Terrain
+  if (terrain === "oui") tokens.push("(terrain OR parcelle OR jardin)");
+  if (terrain === "non") tokens.push("-(terrain OR jardin)");
 
-    // Travaux ?
-    if (travaux === "oui") tokens.push("(travaux OR rénover OR rafraîchir)");
-    if (travaux === "non") tokens.push("-(travaux OR rénover)");
+  // --- Chauffage
+  if (chauffage !== "indifférent") {
+    const map = { gaz: "gaz", elec: "électrique", bois: "bois", pac: `"pompe à chaleur"` };
+    tokens.push(`(${map[chauffage] || chauffage})`);
+  }
 
-    // Vente uniquement
-    tokens.push('(vente OR "à vendre") -location -louer');
+  // --- Travaux
+  if (travaux === "oui") tokens.push("(travaux OR rénover OR rafraîchir)");
+  if (travaux === "non") tokens.push("-(travaux OR rénover)");
 
-    return tokens.join(" ");
-  }, [
-    departement, site, prixMin, prixMax,
-    piecesMin, piecesMax, surfaceMin,
-    terrain, chauffage, travaux
-  ]);
+  // --- Vente (éviter programmes neufs si tu veux)
+  tokens.push('(vente OR "à vendre")');
+  tokens.push("-neuf -programme");
+
+  return tokens.join(" ");
+}, [
+  departement, site, prixMin, prixMax,
+  piecesMin, piecesMax, surfaceMin,
+  terrain, chauffage, travaux
+]);
 
   // ------- Open Google -------
   const handleOpenGoogle = () => {
