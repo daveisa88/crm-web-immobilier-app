@@ -1,5 +1,14 @@
 import React, { useMemo, useState, useCallback } from "react";
 
+// ------- Mapping sites -> domaines Google "site:..."
+const DOMAINS = {
+  seloger: ["seloger.com"],
+  leboncoin: ["leboncoin.fr"],
+  bienici: ["bienici.com"],
+  pap: ["pap.fr"],
+  "logic-immo": ["logic-immo.com"],
+};
+
 export default function ScraperImmo() {
   // ------- Filtres -------
   const [departement, setDepartement] = useState("Rhône");
@@ -12,15 +21,6 @@ export default function ScraperImmo() {
   const [terrain, setTerrain] = useState("indifférent");
   const [chauffage, setChauffage] = useState("indifférent");
   const [travaux, setTravaux] = useState("indifférent");
-
-  // ------- Mapping sites -> domaines Google "site:..."
-  const DOMAINS = {
-    seloger: ["seloger.com"],
-    leboncoin: ["leboncoin.fr"],
-    bienici: ["bienici.com"],
-    pap: ["pap.fr"],
-    "logic-immo": ["logic-immo.com"],
-  };
 
   // ------- Construction de la requête Google (mémoïsée) -------
   const buildGoogleQuery = useCallback(() => {
@@ -47,9 +47,7 @@ export default function ScraperImmo() {
 
     // Surface
     if (surfaceMin) {
-      tokens.push(
-        `(${surfaceMin}m² OR "surface ${surfaceMin}m²" OR ">= ${surfaceMin} m²")`
-      );
+      tokens.push(`(${surfaceMin}m² OR "surface ${surfaceMin}m²" OR ">= ${surfaceMin} m²")`);
     }
 
     // Terrain ?
@@ -112,7 +110,6 @@ export default function ScraperImmo() {
     "Val-de-Marne","Val-d'Oise"
   ];
 
-  // ------- Aperçu de la requête -------
   const previewQuery = useMemo(() => buildGoogleQuery(), [buildGoogleQuery]);
 
   return (
@@ -120,7 +117,7 @@ export default function ScraperImmo() {
       <h1 style={title}>🏡 Scraper Immo Pro — France</h1>
 
       <div style={panel}>
-        {/* Ligne 1 */}
+        {/* === Filtres === */}
         <div style={row}>
           <div style={col}>
             <label style={label}>Département</label>
@@ -141,7 +138,7 @@ export default function ScraperImmo() {
           </div>
         </div>
 
-        {/* Ligne 2 */}
+        {/* === Autres filtres === */}
         <div style={row}>
           <div style={col}>
             <label style={label}>Prix min (€)</label>
@@ -175,7 +172,6 @@ export default function ScraperImmo() {
           </div>
         </div>
 
-        {/* Ligne 3 */}
         <div style={row}>
           <div style={col}>
             <label style={label}>Terrain ?</label>
@@ -205,12 +201,12 @@ export default function ScraperImmo() {
           </div>
         </div>
 
-        {/* Actions */}
+        {/* === Action === */}
         <div style={{ textAlign: "center", marginTop: 14 }}>
           <button onClick={handleOpenGoogle} style={btnRun}>🔎 Lancer la recherche Google</button>
         </div>
 
-        {/* Preview */}
+        {/* === Preview === */}
         <div style={{ marginTop: 14, fontSize: 13, opacity: 0.9 }}>
           <div style={{ marginBottom: 6 }}>Aperçu requête :</div>
           <code style={codeBox}>{previewQuery}</code>
