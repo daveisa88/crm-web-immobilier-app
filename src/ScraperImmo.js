@@ -1,12 +1,9 @@
-// src/ScraperImmo.js
-console.log("Scraper UI version 1.5 Google Search Edition");
-
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 export default function ScraperImmo() {
   // ------- Filtres -------
-  const [departement, setDepartement] = useState("Haute-Marne");
-  const [site, setSite] = useState("leboncoin");
+  const [departement, setDepartement] = useState("Rhône");
+  const [site, setSite] = useState("seloger");
   const [prixMin, setPrixMin] = useState(20000);
   const [prixMax, setPrixMax] = useState(800000);
   const [piecesMin, setPiecesMin] = useState(1);
@@ -16,53 +13,79 @@ export default function ScraperImmo() {
   const [chauffage, setChauffage] = useState("indifférent");
   const [travaux, setTravaux] = useState("indifférent");
 
-  // ------- NOUVEAU : Recherche Google -------
-  const handleSearchGoogle = () => {
-    const tokens = [];
-
-    // Département
-    if (departement) tokens.push(`"${departement}"`);
-
-    // Domaine selon le site sélectionné
-    const siteDomains = {
-      seloger: "site:seloger.com",
-      leboncoin: "site:leboncoin.fr",
-      bienici: "site:bienici.com",
-      pap: "site:pap.fr",
-      "logic-immo": "site:logic-immo.com",
-    };
-    tokens.push(siteDomains[site] || "");
-
-    // Type de bien
-    tokens.push("maison");
-
-    // Filtres texte
-    tokens.push(`${piecesMin}-${piecesMax} pièces`);
-    tokens.push(`${surfaceMin}m²`);
-    tokens.push(`${prixMin}-${prixMax}€`);
-
-    if (terrain === "oui") tokens.push("terrain");
-    if (travaux === "oui") tokens.push("à rénover");
-
-    const chauffageLabel = {
-      gaz: "gaz",
-      elec: "électrique",
-      bois: "bois",
-      pac: "pompe à chaleur",
-    };
-    if (chauffage !== "indifférent") {
-      tokens.push(chauffageLabel[chauffage] || chauffage);
-    }
-
-    // Exclusion location / non vente
-    tokens.push("-location -louer -colocation");
-
-    const googleQuery = tokens.filter(Boolean).join(" ");
-    const url = `https://www.google.com/search?q=${encodeURIComponent(googleQuery)}`;
-
-    window.open(url, "_blank");
+  // ------- Mapping sites -> domaines Google "site:..."
+  const DOMAINS = {
+    seloger: ["seloger.com"],
+    leboncoin: ["leboncoin.fr"],
+    bienici: ["bienici.com"],
+    pap: ["pap.fr"],
+    "logic-immo": ["logic-immo.com"],
   };
 
+  // ------- Construction de la requête Google -------
+  const buildGoogleQuery = () => {
+    const tokens = [];
+
+    // Domaine(s)
+    const domains = DOMAINS[site] || [];
+    if (domains.length) {
+      tokens.push(`(${domains.map((d) => `site:${d}`).join(" OR ")})`);
+    }
+
+    // Localisation
+    tokens.push(`"${departement}"`);
+
+    // Prix (Google ne gère pas vraiment les plages, mais ça aide quand même)
+    if (prixMin) tokens.push(`${prixMin}€..`);
+    if (prixMax) tokens.push(`..${prixMax}€`);
+    tokens.push("(prix OR €)");
+
+    // Pièces
+    if (piecesMin || piecesMax) {
+      if (piecesMin && piecesMax) tokens.push(`"${piecesMin}-${piecesMax} pièces"`);
+      else if (piecesMin) tokens.push(`"${piecesMin} pièces"`);
+      else if (piecesMax) tokens.push(`"${piecesMax} pièces"`);
+    }
+
+    // Surface
+    if (surfaceMin) {
+      tokens.push(
+        `(${surfaceMin}m² OR "surface ${surfaceMin}m²" OR ">= ${surfaceMin} m²")`
+      );
+    }
+
+    // Terrain ?
+    if (terrain === "oui") tokens.push("(terrain OR parcelle OR jardin)");
+    if (terrain === "non") tokens.push("-(terrain OR jardin)");
+
+    // Chauffage
+    if (chauffage !== "indifférent") {
+      const map = { gaz: "gaz", elec: "électrique", bois: "bois", pac: `"pompe à chaleur"` };
+      tokens.push(`(${map[chauffage] || chauffage})`);
+    }
+
+    // Travaux ?
+    if (travaux === "oui") tokens.push("(travaux OR rénover OR rafraîchir)");
+    if (travaux === "non") tokens.push("-(travaux OR rénover)");
+
+    // Vente uniquement (évite la loc)
+    tokens.push('(vente OR "à vendre") -location -louer');
+
+    return tokens.join(" ");
+  };
+
+  // ------- Open Google -------
+  const handleOpenGoogle = () => {
+    const q = buildGoogleQuery();
+    const url = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    // Fallback si pop-up bloquée
+    if (!w) {
+      alert("Votre navigateur a bloqué l’ouverture de l’onglet. Autorisez les pop-ups ou cliquez sur le lien ci-dessous.");
+    }
+  };
+
+  // ===== UI =====
   const SITES = [
     { label: "SeLoger", value: "seloger" },
     { label: "LeBonCoin", value: "leboncoin" },
@@ -90,23 +113,37 @@ export default function ScraperImmo() {
     "Val-de-Marne","Val-d'Oise"
   ];
 
+  // Un petit aperçu texte de la requête (utile pour debug / copier)
+  const previewQuery = useMemo(() => buildGoogleQuery(), [
+    departement, site, prixMin, prixMax, piecesMin, piecesMax, surfaceMin, terrain, chauffage, travaux
+  ]);
+
   return (
     <div style={page}>
-      <h1 style={title}>🏡 Recherche Immo Pro — Google</h1>
+      <h1 style={title}>🏡 Scraper Immo Pro — France</h1>
 
       <div style={panel}>
         {/* Ligne 1 */}
         <div style={row}>
           <div style={col}>
             <label style={label}>Département</label>
-            <select value={departement} onChange={(e) => setDepartement(e.target.value)} style={select}>
-              {DEPARTEMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+            <select
+              value={departement}
+              onChange={(e) => setDepartement(e.target.value)}
+              style={select}
+            >
+              {DEPARTEMENTS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
             </select>
           </div>
+
           <div style={col}>
             <label style={label}>Site</label>
             <select value={site} onChange={(e) => setSite(e.target.value)} style={select}>
-              {SITES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              {SITES.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -115,30 +152,65 @@ export default function ScraperImmo() {
         <div style={row}>
           <div style={col}>
             <label style={label}>Prix min (€)</label>
-            <input type="number" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} style={input} />
+            <input
+              type="number"
+              min={0}
+              value={prixMin}
+              onChange={(e) => setPrixMin(Number(e.target.value))}
+              style={input}
+              placeholder="ex: 20000"
+            />
           </div>
           <div style={col}>
             <label style={label}>Prix max (€)</label>
-            <input type="number" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} style={input} />
+            <input
+              type="number"
+              min={0}
+              value={prixMax}
+              onChange={(e) => setPrixMax(Number(e.target.value))}
+              style={input}
+              placeholder="ex: 800000"
+            />
           </div>
           <div style={col}>
             <label style={label}>Pièces min</label>
-            <input type="number" value={piecesMin} onChange={(e) => setPiecesMin(e.target.value)} style={input} />
+            <input
+              type="number"
+              min={1}
+              value={piecesMin}
+              onChange={(e) => setPiecesMin(Number(e.target.value))}
+              style={input}
+              placeholder="ex: 1"
+            />
           </div>
           <div style={col}>
             <label style={label}>Pièces max</label>
-            <input type="number" value={piecesMax} onChange={(e) => setPiecesMax(e.target.value)} style={input} />
+            <input
+              type="number"
+              min={1}
+              value={piecesMax}
+              onChange={(e) => setPiecesMax(Number(e.target.value))}
+              style={input}
+              placeholder="ex: 5"
+            />
           </div>
           <div style={col}>
             <label style={label}>Surface min (m²)</label>
-            <input type="number" value={surfaceMin} onChange={(e) => setSurfaceMin(e.target.value)} style={input} />
+            <input
+              type="number"
+              min={0}
+              value={surfaceMin}
+              onChange={(e) => setSurfaceMin(Number(e.target.value))}
+              style={input}
+              placeholder="ex: 20"
+            />
           </div>
         </div>
 
         {/* Ligne 3 */}
         <div style={row}>
           <div style={col}>
-            <label style={label}>Terrain</label>
+            <label style={label}>Terrain ?</label>
             <select value={terrain} onChange={(e) => setTerrain(e.target.value)} style={select}>
               <option value="indifférent">Indifférent</option>
               <option value="oui">Oui</option>
@@ -165,8 +237,25 @@ export default function ScraperImmo() {
           </div>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 18 }}>
-          <button onClick={handleSearchGoogle} style={btnRun}>🔍 Rechercher sur Google</button>
+        {/* Actions */}
+        <div style={{ textAlign: "center", marginTop: 14 }}>
+          <button onClick={handleOpenGoogle} style={btnRun}>🔎 Lancer la recherche Google</button>
+        </div>
+
+        {/* Preview & lien direct en cas de popup bloquée */}
+        <div style={{ marginTop: 14, fontSize: 13, opacity: 0.9 }}>
+          <div style={{ marginBottom: 6 }}>Aperçu requête :</div>
+          <code style={codeBox}>{previewQuery}</code>
+          <div style={{ marginTop: 10 }}>
+            <a
+              href={`https://www.google.com/search?q=${encodeURIComponent(previewQuery)}`}
+              target="_blank"
+              rel="noreferrer"
+              style={link}
+            >
+              🔗 Ouvrir la recherche dans un nouvel onglet
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -174,12 +263,62 @@ export default function ScraperImmo() {
 }
 
 /* ===== Styles ===== */
-const page = { backgroundColor: "#243b55", color: "white", minHeight: "100vh", padding: 40, fontFamily: "Segoe UI" };
+const page = {
+  backgroundColor: "#243b55",
+  color: "white",
+  minHeight: "100vh",
+  padding: 40,
+  fontFamily: "Segoe UI",
+};
 const title = { textAlign: "center", color: "#e91e63", marginBottom: 14 };
-const panel = { background: "#1e3150", padding: 16, borderRadius: 12, maxWidth: 1200, margin: "0 auto" };
-const row = { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 10 };
-const col = { display: "flex", flexDirection: "column", gap: 6 };
+const panel = {
+  background: "#1e3150",
+  padding: 16,
+  borderRadius: 12,
+  boxShadow: "0 2px 10px rgba(0,0,0,.25)",
+  maxWidth: 1200,
+  margin: "0 auto",
+};
+const row = {
+  display: "grid",
+  gridTemplateColumns: "repeat(5, 1fr)",
+  gap: 12,
+  marginBottom: 10,
+};
+const col = { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 };
 const label = { fontSize: 13, opacity: 0.9 };
-const select = { padding: "10px 12px", borderRadius: 8, fontSize: 14, background: "#4fa3f7", color: "white", border: "none" };
-const input = { padding: "10px 12px", borderRadius: 8, fontSize: 14, background: "#2d446a", color: "white", border: "1px solid #3b4f7f" };
-const btnRun = { padding: "12px 22px", borderRadius: 8, backgroundColor: "#3f6628", color: "white", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 16 };
+const select = {
+  padding: "10px 12px",
+  borderRadius: 8,
+  fontSize: 14,
+  background: "#4fa3f7",
+  color: "white",
+  border: "none",
+};
+const input = {
+  padding: "10px 12px",
+  borderRadius: 8,
+  fontSize: 14,
+  background: "#2d446a",
+  color: "white",
+  border: "1px solid #3b4f7f",
+};
+const btnRun = {
+  padding: "10px 18px",
+  borderRadius: 8,
+  backgroundColor: "#2d7d46",
+  color: "white",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: "bold",
+};
+const link = { color: "#4fa3f7", fontWeight: "bold", textDecoration: "none" };
+const codeBox = {
+  display: "block",
+  background: "#14233d",
+  border: "1px solid #29406a",
+  padding: "10px 12px",
+  borderRadius: 8,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+};
