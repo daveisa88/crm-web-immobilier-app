@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 
 export default function ScraperImmo() {
   // ------- Filtres -------
@@ -22,20 +22,18 @@ export default function ScraperImmo() {
     "logic-immo": ["logic-immo.com"],
   };
 
-  // ------- Construction de la requête Google -------
-  const buildGoogleQuery = () => {
+  // ------- Construction de la requête Google (mémoïsée) -------
+  const buildGoogleQuery = useCallback(() => {
     const tokens = [];
 
     // Domaine(s)
     const domains = DOMAINS[site] || [];
-    if (domains.length) {
-      tokens.push(`(${domains.map((d) => `site:${d}`).join(" OR ")})`);
-    }
+    if (domains.length) tokens.push(`(${domains.map((d) => `site:${d}`).join(" OR ")})`);
 
     // Localisation
     tokens.push(`"${departement}"`);
 
-    // Prix (Google ne gère pas vraiment les plages, mais ça aide quand même)
+    // Prix
     if (prixMin) tokens.push(`${prixMin}€..`);
     if (prixMax) tokens.push(`..${prixMax}€`);
     tokens.push("(prix OR €)");
@@ -68,24 +66,25 @@ export default function ScraperImmo() {
     if (travaux === "oui") tokens.push("(travaux OR rénover OR rafraîchir)");
     if (travaux === "non") tokens.push("-(travaux OR rénover)");
 
-    // Vente uniquement (évite la loc)
+    // Vente uniquement
     tokens.push('(vente OR "à vendre") -location -louer');
 
     return tokens.join(" ");
-  };
+  }, [
+    departement, site, prixMin, prixMax,
+    piecesMin, piecesMax, surfaceMin,
+    terrain, chauffage, travaux
+  ]);
 
   // ------- Open Google -------
   const handleOpenGoogle = () => {
     const q = buildGoogleQuery();
     const url = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
     const w = window.open(url, "_blank", "noopener,noreferrer");
-    // Fallback si pop-up bloquée
-    if (!w) {
-      alert("Votre navigateur a bloqué l’ouverture de l’onglet. Autorisez les pop-ups ou cliquez sur le lien ci-dessous.");
-    }
+    if (!w) alert("Votre navigateur a bloqué l’ouverture de l’onglet. Autorisez les pop-ups.");
   };
 
-  // ===== UI =====
+  // ------- Données UI -------
   const SITES = [
     { label: "SeLoger", value: "seloger" },
     { label: "LeBonCoin", value: "leboncoin" },
@@ -113,10 +112,8 @@ export default function ScraperImmo() {
     "Val-de-Marne","Val-d'Oise"
   ];
 
-  // Un petit aperçu texte de la requête (utile pour debug / copier)
-  const previewQuery = useMemo(() => buildGoogleQuery(), [
-    departement, site, prixMin, prixMax, piecesMin, piecesMax, surfaceMin, terrain, chauffage, travaux
-  ]);
+  // ------- Aperçu de la requête -------
+  const previewQuery = useMemo(() => buildGoogleQuery(), [buildGoogleQuery]);
 
   return (
     <div style={page}>
@@ -127,11 +124,7 @@ export default function ScraperImmo() {
         <div style={row}>
           <div style={col}>
             <label style={label}>Département</label>
-            <select
-              value={departement}
-              onChange={(e) => setDepartement(e.target.value)}
-              style={select}
-            >
+            <select value={departement} onChange={(e) => setDepartement(e.target.value)} style={select}>
               {DEPARTEMENTS.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
@@ -152,58 +145,33 @@ export default function ScraperImmo() {
         <div style={row}>
           <div style={col}>
             <label style={label}>Prix min (€)</label>
-            <input
-              type="number"
-              min={0}
-              value={prixMin}
+            <input type="number" min={0} value={prixMin}
               onChange={(e) => setPrixMin(Number(e.target.value))}
-              style={input}
-              placeholder="ex: 20000"
-            />
+              style={input} placeholder="ex: 20000" />
           </div>
           <div style={col}>
             <label style={label}>Prix max (€)</label>
-            <input
-              type="number"
-              min={0}
-              value={prixMax}
+            <input type="number" min={0} value={prixMax}
               onChange={(e) => setPrixMax(Number(e.target.value))}
-              style={input}
-              placeholder="ex: 800000"
-            />
+              style={input} placeholder="ex: 800000" />
           </div>
           <div style={col}>
             <label style={label}>Pièces min</label>
-            <input
-              type="number"
-              min={1}
-              value={piecesMin}
+            <input type="number" min={1} value={piecesMin}
               onChange={(e) => setPiecesMin(Number(e.target.value))}
-              style={input}
-              placeholder="ex: 1"
-            />
+              style={input} placeholder="ex: 1" />
           </div>
           <div style={col}>
             <label style={label}>Pièces max</label>
-            <input
-              type="number"
-              min={1}
-              value={piecesMax}
+            <input type="number" min={1} value={piecesMax}
               onChange={(e) => setPiecesMax(Number(e.target.value))}
-              style={input}
-              placeholder="ex: 5"
-            />
+              style={input} placeholder="ex: 5" />
           </div>
           <div style={col}>
             <label style={label}>Surface min (m²)</label>
-            <input
-              type="number"
-              min={0}
-              value={surfaceMin}
+            <input type="number" min={0} value={surfaceMin}
               onChange={(e) => setSurfaceMin(Number(e.target.value))}
-              style={input}
-              placeholder="ex: 20"
-            />
+              style={input} placeholder="ex: 20" />
           </div>
         </div>
 
@@ -242,17 +210,13 @@ export default function ScraperImmo() {
           <button onClick={handleOpenGoogle} style={btnRun}>🔎 Lancer la recherche Google</button>
         </div>
 
-        {/* Preview & lien direct en cas de popup bloquée */}
+        {/* Preview */}
         <div style={{ marginTop: 14, fontSize: 13, opacity: 0.9 }}>
           <div style={{ marginBottom: 6 }}>Aperçu requête :</div>
           <code style={codeBox}>{previewQuery}</code>
           <div style={{ marginTop: 10 }}>
-            <a
-              href={`https://www.google.com/search?q=${encodeURIComponent(previewQuery)}`}
-              target="_blank"
-              rel="noreferrer"
-              style={link}
-            >
+            <a href={`https://www.google.com/search?q=${encodeURIComponent(previewQuery)}`}
+               target="_blank" rel="noreferrer" style={link}>
               🔗 Ouvrir la recherche dans un nouvel onglet
             </a>
           </div>
@@ -263,62 +227,14 @@ export default function ScraperImmo() {
 }
 
 /* ===== Styles ===== */
-const page = {
-  backgroundColor: "#243b55",
-  color: "white",
-  minHeight: "100vh",
-  padding: 40,
-  fontFamily: "Segoe UI",
-};
+const page = { backgroundColor: "#243b55", color: "white", minHeight: "100vh", padding: 40, fontFamily: "Segoe UI" };
 const title = { textAlign: "center", color: "#e91e63", marginBottom: 14 };
-const panel = {
-  background: "#1e3150",
-  padding: 16,
-  borderRadius: 12,
-  boxShadow: "0 2px 10px rgba(0,0,0,.25)",
-  maxWidth: 1200,
-  margin: "0 auto",
-};
-const row = {
-  display: "grid",
-  gridTemplateColumns: "repeat(5, 1fr)",
-  gap: 12,
-  marginBottom: 10,
-};
+const panel = { background: "#1e3150", padding: 16, borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,.25)", maxWidth: 1200, margin: "0 auto" };
+const row = { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 10 };
 const col = { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 };
 const label = { fontSize: 13, opacity: 0.9 };
-const select = {
-  padding: "10px 12px",
-  borderRadius: 8,
-  fontSize: 14,
-  background: "#4fa3f7",
-  color: "white",
-  border: "none",
-};
-const input = {
-  padding: "10px 12px",
-  borderRadius: 8,
-  fontSize: 14,
-  background: "#2d446a",
-  color: "white",
-  border: "1px solid #3b4f7f",
-};
-const btnRun = {
-  padding: "10px 18px",
-  borderRadius: 8,
-  backgroundColor: "#2d7d46",
-  color: "white",
-  border: "none",
-  cursor: "pointer",
-  fontWeight: "bold",
-};
+const select = { padding: "10px 12px", borderRadius: 8, fontSize: 14, background: "#4fa3f7", color: "white", border: "none" };
+const input = { padding: "10px 12px", borderRadius: 8, fontSize: 14, background: "#2d446a", color: "white", border: "1px solid #3b4f7f" };
+const btnRun = { padding: "10px 18px", borderRadius: 8, backgroundColor: "#2d7d46", color: "white", border: "none", cursor: "pointer", fontWeight: "bold" };
 const link = { color: "#4fa3f7", fontWeight: "bold", textDecoration: "none" };
-const codeBox = {
-  display: "block",
-  background: "#14233d",
-  border: "1px solid #29406a",
-  padding: "10px 12px",
-  borderRadius: 8,
-  whiteSpace: "pre-wrap",
-  wordBreak: "break-word",
-};
+const codeBox = { display: "block", background: "#14233d", border: "1px solid #29406a", padding: "10px 12px", borderRadius: 8, whiteSpace: "pre-wrap", wordBreak: "break-word" };
