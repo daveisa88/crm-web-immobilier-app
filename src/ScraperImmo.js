@@ -10,148 +10,216 @@ const clean = (str) =>
     .replace(/ /g, "+")
     .replace(/'/g, "");
 
-
 // ======================================================
 // DÉPARTEMENTS (internes – safe keys)
 // ======================================================
 const DEPARTEMENT_CP = {
-  Ain:["01"], Aisne:["02"], Allier:["03"],
-  Alpes_de_Haute_Provence:["04"], Hautes_Alpes:["05"], Alpes_Maritimes:["06"],
-  Ardeche:["07"], Ardennes:["08"], Ariege:["09"],
-  Aube:["10"], Aude:["11"], Aveyron:["12"],
-  Bas_Rhin:["67"], Haut_Rhin:["68"],
-  Bouches_du_Rhone:["13"],
-  Calvados:["14"], Cantal:["15"],
-  Charente:["16"], Charente_Maritime:["17"],
-  Cher:["18"], Correze:["19"],
-  Corse_du_Sud:["2A"], Haute_Corse:["2B"],
-  Cote_d_Or:["21"], Cotes_d_Armor:["22"],
-  Creuse:["23"], Deux_Sevres:["79"],
-  Dordogne:["24"], Doubs:["25"], Drome:["26"],
-  Eure:["27"], Eure_et_Loir:["28"],
-  Finistere:["29"],
-  Gard:["30"], Haute_Garonne:["31"], Gers:["32"], Gironde:["33"], Herault:["34"],
-  Ille_et_Vilaine:["35"], Indre:["36"], Indre_et_Loire:["37"], Isere:["38"], Jura:["39"],
-  Landes:["40"], Loir_et_Cher:["41"], Loire:["42"], Haute_Loire:["43"], Loire_Atlantique:["44"],
-  Loiret:["45"], Lot:["46"], Lot_et_Garonne:["47"], Lozere:["48"],
-  Maine_et_Loire:["49"], Manche:["50"], Marne:["51"], Haute_Marne:["52"], Mayenne:["53"],
-  Meurthe_et_Moselle:["54"], Meuse:["55"], Morbihan:["56"], Moselle:["57"], Nievre:["58"],
-  Nord:["59"], Oise:["60"], Orne:["61"], Pas_de_Calais:["62"], Puy_de_Dome:["63"],
-  Pyrenees_Atlantiques:["64"], Hautes_Pyrenees:["65"], Pyrenees_Orientales:["66"],
-  Rhone:["69"], Haute_Saone:["70"], Saone_et_Loire:["71"], Sarthe:["72"],
-  Savoie:["73"], Haute_Savoie:["74"],
-  Paris:["75"], Seine_Maritime:["76"], Seine_et_Marne:["77"], Yvelines:["78"],
-  Somme:["80"], Tarn:["81"], Tarn_et_Garonne:["82"],
-  Var:["83"], Vaucluse:["84"], Vendee:["85"], Vienne:["86"], Haute_Vienne:["87"],
-  Vosges:["88"], Yonne:["89"], Territoire_de_Belfort:["90"],
-  Essonne:["91"], Hauts_de_Seine:["92"], Seine_Saint_Denis:["93"], Val_de_Marne:["94"], Val_d_Oise:["95"]
+  Ain: ["01"],
+  Aisne: ["02"],
+  Allier: ["03"],
+  Alpes_de_Haute_Provence: ["04"],
+  Hautes_Alpes: ["05"],
+  Alpes_Maritimes: ["06"],
+  Ardeche: ["07"],
+  Ardennes: ["08"],
+  Ariege: ["09"],
+  Aube: ["10"],
+  Aude: ["11"],
+  Aveyron: ["12"],
+  Bas_Rhin: ["67"],
+  Haut_Rhin: ["68"],
+  Bouches_du_Rhone: ["13"],
+  Calvados: ["14"],
+  Cantal: ["15"],
+  Charente: ["16"],
+  Charente_Maritime: ["17"],
+  Cher: ["18"],
+  Correze: ["19"],
+  Corse_du_Sud: ["2A"],
+  Haute_Corse: ["2B"],
+  Cote_d_Or: ["21"],
+  Cotes_d_Armor: ["22"],
+  Creuse: ["23"],
+  Deux_Sevres: ["79"],
+  Dordogne: ["24"],
+  Doubs: ["25"],
+  Drome: ["26"],
+  Eure: ["27"],
+  Eure_et_Loir: ["28"],
+  Finistere: ["29"],
+  Gard: ["30"],
+  Haute_Garonne: ["31"],
+  Gers: ["32"],
+  Gironde: ["33"],
+  Herault: ["34"],
+  Ille_et_Vilaine: ["35"],
+  Indre: ["36"],
+  Indre_et_Loire: ["37"],
+  Isere: ["38"],
+  Jura: ["39"],
+  Landes: ["40"],
+  Loir_et_Cher: ["41"],
+  Loire: ["42"],
+  Haute_Loire: ["43"],
+  Loire_Atlantique: ["44"],
+  Loiret: ["45"],
+  Lot: ["46"],
+  Lot_et_Garonne: ["47"],
+  Lozere: ["48"],
+  Maine_et_Loire: ["49"],
+  Manche: ["50"],
+  Marne: ["51"],
+  Haute_Marne: ["52"],
+  Mayenne: ["53"],
+  Meurthe_et_Moselle: ["54"],
+  Meuse: ["55"],
+  Morbihan: ["56"],
+  Moselle: ["57"],
+  Nievre: ["58"],
+  Nord: ["59"],
+  Oise: ["60"],
+  Orne: ["61"],
+  Pas_de_Calais: ["62"],
+  Puy_de_Dome: ["63"],
+  Pyrenees_Atlantiques: ["64"],
+  Hautes_Pyrenees: ["65"],
+  Pyrenees_Orientales: ["66"],
+  Rhone: ["69"],
+  Haute_Saone: ["70"],
+  Saone_et_Loire: ["71"],
+  Sarthe: ["72"],
+  Savoie: ["73"],
+  Haute_Savoie: ["74"],
+  Paris: ["75"],
+  Seine_Maritime: ["76"],
+  Seine_et_Marne: ["77"],
+  Yvelines: ["78"],
+  Somme: ["80"],
+  Tarn: ["81"],
+  Tarn_et_Garonne: ["82"],
+  Var: ["83"],
+  Vaucluse: ["84"],
+  Vendee: ["85"],
+  Vienne: ["86"],
+  Haute_Vienne: ["87"],
+  Vosges: ["88"],
+  Yonne: ["89"],
+  Territoire_de_Belfort: ["90"],
+  Essonne: ["91"],
+  Hauts_de_Seine: ["92"],
+  Seine_Saint_Denis: ["93"],
+  Val_de_Marne: ["94"],
+  Val_d_Oise: ["95"]
 };
-
 
 // ======================================================
 // LIBELLÉS UI
 // ======================================================
 const DEPARTEMENTS_UI = {
-  Ain:"Ain",
-  Aisne:"Aisne",
-  Allier:"Allier",
-  Alpes_de_Haute_Provence:"Alpes-de-Haute-Provence",
-  Hautes_Alpes:"Hautes-Alpes",
-  Alpes_Maritimes:"Alpes-Maritimes",
-  Ardeche:"Ardèche",
-  Ardennes:"Ardennes",
-  Ariege:"Ariège",
-  Aube:"Aube",
-  Aude:"Aude",
-  Aveyron:"Aveyron",
-  Bas_Rhin:"Bas-Rhin",
-  Haut_Rhin:"Haut-Rhin",
-  Bouches_du_Rhone:"Bouches-du-Rhône",
-  Calvados:"Calvados",
-  Cantal:"Cantal",
-  Charente:"Charente",
-  Charente_Maritime:"Charente-Maritime",
-  Cher:"Cher",
-  Correze:"Corrèze",
-  Corse_du_Sud:"Corse-du-Sud",
-  Haute_Corse:"Haute-Corse",
-  Cote_d_Or:"Côte-d'Or",
-  Cotes_d_Armor:"Côtes-d'Armor",
-  Creuse:"Creuse",
-  Deux_Sevres:"Deux-Sèvres",
-  Dordogne:"Dordogne",
-  Doubs:"Doubs",
-  Drome:"Drôme",
-  Eure:"Eure",
-  Eure_et_Loir:"Eure-et-Loir",
-  Finistere:"Finistère",
-  Gard:"Gard",
-  Haute_Garonne:"Haute-Garonne",
-  Gers:"Gers",
-  Gironde:"Gironde",
-  Herault:"Hérault",
-  Ille_et_Vilaine:"Ille-et-Vilaine",
-  Indre:"Indre",
-  Indre_et_Loire:"Indre-et-Loire",
-  Isere:"Isère",
-  Jura:"Jura",
-  Landes:"Landes",
-  Loir_et_Cher:"Loir-et-Cher",
-  Loire:"Loire",
-  Haute_Loire:"Haute-Loire",
-  Loire_Atlantique:"Loire-Atlantique",
-  Loiret:"Loiret",
-  Lot:"Lot",
-  Lot_et_Garonne:"Lot-et-Garonne",
-  Lozere:"Lozère",
-  Maine_et_Loire:"Maine-et-Loire",
-  Manche:"Manche",
-  Marne:"Marne",
-  Haute_Marne:"Haute-Marne",
-  Mayenne:"Mayenne",
-  Meurthe_et_Moselle:"Meurthe-et-Moselle",
-  Meuse:"Meuse",
-  Morbihan:"Morbihan",
-  Moselle:"Moselle",
-  Nievre:"Nièvre",
-  Nord:"Nord",
-  Oise:"Oise",
-  Orne:"Orne",
-  Pas_de_Calais:"Pas-de-Calais",
-  Puy_de_Dome:"Puy-de-Dôme",
-  Pyrenees_Atlantiques:"Pyrénées-Atlantiques",
-  Hautes_Pyrenees:"Hautes-Pyrénées",
-  Pyrenees_Orientales:"Pyrénées-Orientales",
-  Rhone:"Rhône",
-  Haute_Saone:"Haute-Saône",
-  Saone_et_Loire:"Saône-et-Loire",
-  Sarthe:"Sarthe",
-  Savoie:"Savoie",
-  Haute_Savoie:"Haute-Savoie",
-  Paris:"Paris",
-  Seine_Maritime:"Seine-Maritime",
-  Seine_et_Marne:"Seine-et-Marne",
-  Yvelines:"Yvelines",
-  Somme:"Somme",
-  Tarn:"Tarn",
-  Tarn_et_Garonne:"Tarn-et-Garonne",
-  Var:"Var",
-  Vaucluse:"Vaucluse",
-  Vendee:"Vendée",
-  Vienne:"Vienne",
-  Haute_Vienne:"Haute-Vienne",
-  Vosges:"Vosges",
-  Yonne:"Yonne",
-  Territoire_de_Belfort:"Territoire de Belfort",
-  Essonne:"Essonne",
-  Hauts_de_Seine:"Hauts-de-Seine",
-  Seine_Saint_Denis:"Seine-Saint-Denis",
-  Val_de_Marne:"Val-de-Marne",
-  Val_d_Oise:"Val-d'Oise"
+  Ain: "Ain",
+  Aisne: "Aisne",
+  Allier: "Allier",
+  Alpes_de_Haute_Provence: "Alpes-de-Haute-Provence",
+  Hautes_Alpes: "Hautes-Alpes",
+  Alpes_Maritimes: "Alpes-Maritimes",
+  Ardeche: "Ardèche",
+  Ardennes: "Ardennes",
+  Ariege: "Ariège",
+  Aube: "Aube",
+  Aude: "Aude",
+  Aveyron: "Aveyron",
+  Bas_Rhin: "Bas-Rhin",
+  Haut_Rhin: "Haut-Rhin",
+  Bouches_du_Rhone: "Bouches-du-Rhône",
+  Calvados: "Calvados",
+  Cantal: "Cantal",
+  Charente: "Charente",
+  Charente_Maritime: "Charente-Maritime",
+  Cher: "Cher",
+  Correze: "Corrèze",
+  Corse_du_Sud: "Corse-du-Sud",
+  Haute_Corse: "Haute-Corse",
+  Cote_d_Or: "Côte-d'Or",
+  Cotes_d_Armor: "Côtes-d'Armor",
+  Creuse: "Creuse",
+  Deux_Sevres: "Deux-Sèvres",
+  Dordogne: "Dordogne",
+  Doubs: "Doubs",
+  Drome: "Drôme",
+  Eure: "Eure",
+  Eure_et_Loir: "Eure-et-Loir",
+  Finistere: "Finistère",
+  Gard: "Gard",
+  Haute_Garonne: "Haute-Garonne",
+  Gers: "Gers",
+  Gironde: "Gironde",
+  Herault: "Hérault",
+  Ille_et_Vilaine: "Ille-et-Vilaine",
+  Indre: "Indre",
+  Indre_et_Loire: "Indre-et-Loire",
+  Isere: "Isère",
+  Jura: "Jura",
+  Landes: "Landes",
+  Loir_et_Cher: "Loir-et-Cher",
+  Loire: "Loire",
+  Haute_Loire: "Haute-Loire",
+  Loire_Atlantique: "Loire-Atlantique",
+  Loiret: "Loiret",
+  Lot: "Lot",
+  Lot_et_Garonne: "Lot-et-Garonne",
+  Lozere: "Lozère",
+  Maine_et_Loire: "Maine-et-Loire",
+  Manche: "Manche",
+  Marne: "Marne",
+  Haute_Marne: "Haute-Marne",
+  Mayenne: "Mayenne",
+  Meurthe_et_Moselle: "Meurthe-et-Moselle",
+  Meuse: "Meuse",
+  Morbihan: "Morbihan",
+  Moselle: "Moselle",
+  Nievre: "Nièvre",
+  Nord: "Nord",
+  Oise: "Oise",
+  Orne: "Orne",
+  Pas_de_Calais: "Pas-de-Calais",
+  Puy_de_Dome: "Puy-de-Dôme",
+  Pyrenees_Atlantiques: "Pyrénées-Atlantiques",
+  Hautes_Pyrenees: "Hautes-Pyrénées",
+  Pyrenees_Orientales: "Pyrénées-Orientales",
+  Rhone: "Rhône",
+  Haute_Saone: "Haute-Saône",
+  Saone_et_Loire: "Saône-et-Loire",
+  Sarthe: "Sarthe",
+  Savoie: "Savoie",
+  Haute_Savoie: "Haute-Savoie",
+  Paris: "Paris",
+  Seine_Maritime: "Seine-Maritime",
+  Seine_et_Marne: "Seine-et-Marne",
+  Yvelines: "Yvelines",
+  Somme: "Somme",
+  Tarn: "Tarn",
+  Tarn_et_Garonne: "Tarn-et-Garonne",
+  Var: "Var",
+  Vaucluse: "Vaucluse",
+  Vendee: "Vendée",
+  Vienne: "Vienne",
+  Haute_Vienne: "Haute-Vienne",
+  Vosges: "Vosges",
+  Yonne: "Yonne",
+  Territoire_de_Belfort: "Territoire de Belfort",
+  Essonne: "Essonne",
+  Hauts_de_Seine: "Hauts-de-Seine",
+  Seine_Saint_Denis: "Seine-Saint-Denis",
+  Val_de_Marne: "Val-de-Marne",
+  Val_d_Oise: "Val-d'Oise"
 };
+
 export default function ScraperImmo() {
+  // Liste des départements = clés internes
+  const DEPARTEMENTS = Object.keys(DEPARTEMENT_CP);
+
   // ------- États des filtres -------
-  const [departement, setDepartement] = useState("Rhône");
+  const [departement, setDepartement] = useState("Rhone");
   const [site, setSite] = useState("leboncoin");
   const [prixMin, setPrixMin] = useState(100000);
   const [prixMax, setPrixMax] = useState(400000);
@@ -173,11 +241,13 @@ export default function ScraperImmo() {
 
   // ------- Mapping des sites vers URL natives -------
   const buildSiteUrl = useCallback(() => {
-    const dptEncoded = encodeURIComponent(departement);
+    // label "joli" pour les sites (avec accents)
+    const dptLabel = DEPARTEMENTS_UI[departement] || departement;
+    const dptEncoded = encodeURIComponent(dptLabel);
 
     // ------- Leboncoin -------
     if (site === "leboncoin") {
-      const dptClean = clean(departement); // ex : Rhône -> Rhone
+      const dptClean = clean(dptLabel); // ex : Rhône -> Rhone
       const cpList = DEPARTEMENT_CP[departement] || [];
       const cpString = cpList.join(",");
 
@@ -302,7 +372,7 @@ export default function ScraperImmo() {
             },
             keywords
           },
-          zone: { type: "departement", value: departement }
+          zone: { type: "departement", value: dptLabel }
         })
       );
       return `https://www.bienici.com/recherche/${json}`;
@@ -316,7 +386,7 @@ export default function ScraperImmo() {
         prixmax: prixMax || "",
         nb_pieces: piecesMin || "",
         surface: surfaceMin || "",
-        villes: departement
+        villes: dptLabel
       });
       return `https://www.pap.fr/annonce/vente-${typeBien}?${params.toString()}`;
     }
@@ -331,7 +401,7 @@ export default function ScraperImmo() {
         piecesmin: piecesMin || "",
         piecesmax: piecesMax || "",
         type: typeBien,
-        location: departement
+        location: dptLabel
       });
       return `https://www.logic-immo.com/${typeBien}/?${params.toString()}`;
     }
@@ -378,25 +448,6 @@ export default function ScraperImmo() {
     { label: "Maison", value: "maison" },
     { label: "Appartement", value: "appartement" },
     { label: "Terrain", value: "terrain" }
-  ];
-
-  const DEPARTEMENTS = [
-    "Ain","Aisne","Allier","Alpes-de-Haute-Provence","Hautes-Alpes","Alpes-Maritimes",
-    "Ardèche","Ardennes","Ariège","Aube","Aude","Aveyron","Bas-Rhin","Haut-Rhin",
-    "Bouches-du-Rhône","Calvados","Cantal","Charente","Charente-Maritime","Cher",
-    "Corrèze","Corse-du-Sud","Haute-Corse","Côte-d'Or","Côtes-d'Armor","Creuse",
-    "Deux-Sèvres","Dordogne","Doubs","Drôme","Eure","Eure-et-Loir","Finistère",
-    "Gard","Haute-Garonne","Gers","Gironde","Hérault","Ille-et-Vilaine","Indre",
-    "Indre-et-Loire","Isère","Jura","Landes","Loir-et-Cher","Loire","Haute-Loire",
-    "Loire-Atlantique","Loiret","Lot","Lot-et-Garonne","Lozère","Maine-et-Loire",
-    "Manche","Marne","Haute-Marne","Mayenne","Meurthe-et-Moselle","Meuse",
-    "Morbihan","Moselle","Nièvre","Nord","Oise","Orne","Pas-de-Calais","Puy-de-Dôme",
-    "Pyrénées-Atlantiques","Hautes-Pyrénées","Pyrénées-Orientales","Rhône",
-    "Haute-Saône","Saône-et-Loire","Sarthe","Savoie","Haute-Savoie","Paris",
-    "Seine-Maritime","Seine-et-Marne","Yvelines","Somme","Tarn","Tarn-et-Garonne",
-    "Var","Vaucluse","Vendée","Vienne","Haute-Vienne","Vosges","Yonne",
-    "Territoire de Belfort","Essonne","Hauts-de-Seine","Seine-Saint-Denis",
-    "Val-de-Marne","Val-d'Oise"
   ];
 
   // ------- Aperçu de l’URL -------
@@ -449,7 +500,7 @@ export default function ScraperImmo() {
             >
               {DEPARTEMENTS.map((d) => (
                 <option key={d} value={d}>
-                  {d}
+                  {DEPARTEMENTS_UI[d] || d}
                 </option>
               ))}
             </select>
@@ -702,7 +753,7 @@ const link = { color: "#4fa3f7", fontWeight: "bold", textDecoration: "none" };
 const codeBox = {
   display: "block",
   background: "#14233d",
-  border: "1px solid "#29406a",
+  border: "1px solid #29406a",
   padding: "10px 12px",
   borderRadius: 8,
   whiteSpace: "pre-wrap",
