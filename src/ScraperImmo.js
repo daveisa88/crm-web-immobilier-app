@@ -129,28 +129,45 @@ export default function ScraperImmo() {
   const [dpe, setDpe] = useState("indifferent");
 
   /* ==========================================================
-     🔵 Génération URL LEBONCOIN EXACTE & MINIMALISTE
-     ========================================================== */
+   🔵 Génération URL LEBONCOIN EXACTE & MINIMALISTE
+   ========================================================== */
   const buildLeboncoinUrl = useCallback(() => {
+    // Code département → format LBC : d_XX
     const cp = DEPARTEMENT_CP[departement]?.[0] || "";
-    const dptLBC = "d_" + cp;
+    const dptLBC = `d_${cp}`;
 
+    // Type de bien → valeurs Leboncoin
+    const typeMapLbc = {
+      maison: "1",
+      appartement: "2",
+      terrain: "3",
+    };
+    const typeBienLBC = typeMapLbc[typeBien] || "1";
+
+    // Plages
     const roomsPart = `${piecesMin}-${piecesMax}`;
     const squarePart = `${surfaceMin}-`;
+    const pricePart = `${prixMin}-${prixMax}`;
 
+    // URL minimale strictement compatible LBC
     let url =
       "https://www.leboncoin.fr/recherche?" +
       "category=9" +
-      `&locations=${dptLBC}` +
-      `&price=${prixMin}-${prixMax}` +
+      `&locations=${dptLBC}` +         // d_88, d_69, d_75, etc.
+      `&price=${pricePart}` +
       `&rooms=${roomsPart}` +
-      `&square=${squarePart}`;
+      `&square=${squarePart}` +
+      `&real_estate_type=${typeBienLBC}` +
+      `&immo_sell_type=old`;
 
+    // Terrain
     if (terrainMin || terrainMax) {
       url += `&land_plot_surface=${terrainMin || ""}-${terrainMax || ""}`;
     }
+
+    // DPE
     if (dpe !== "indifferent") {
-      url += `&energy_rate=${dpe.toLowerCase()}`;
+      url += `&energy_rate=${dpe.toLowerCase()}`; // exemple : d, c, e, g
     }
 
     return url;
@@ -164,49 +181,9 @@ export default function ScraperImmo() {
     terrainMin,
     terrainMax,
     dpe,
+    typeBien,
   ]);
 
-  /* ==========================================================
-     🔵 URL AUTRES SITES
-     ========================================================== */
-  const buildSelogerUrl = useCallback(() => {
-    const label = DEPARTEMENTS_UI[departement];
-    const params = new URLSearchParams({
-      idtt: "2",
-      prixmin: prixMin,
-      prixmax: prixMax,
-      nb_pieces_min: piecesMin,
-      nb_pieces_max: piecesMax,
-      surfmin: surfaceMin,
-    });
-    return `https://www.seloger.com/list.htm?${params.toString()}&localisation=${label}`;
-  }, [departement, prixMin, prixMax, piecesMin, piecesMax, surfaceMin]);
-
-  const buildBienIciUrl = useCallback(() => {
-    const json = JSON.stringify({
-      filters: {
-        category: "buy",
-        price: { min: prixMin, max: prixMax },
-        rooms: { min: piecesMin, max: piecesMax },
-        surface: { min: surfaceMin },
-        land_plot_surface: {
-          min: terrainMin ? Number(terrainMin) : undefined,
-          max: terrainMax ? Number(terrainMax) : undefined,
-        },
-      },
-      zone: { type: "departement", value: DEPARTEMENTS_UI[departement] },
-    });
-    return "https://www.bienici.com/recherche/" + encodeURIComponent(json);
-  }, [
-    departement,
-    prixMin,
-    prixMax,
-    piecesMin,
-    piecesMax,
-    surfaceMin,
-    terrainMin,
-    terrainMax,
-  ]);
 
   const buildPAPUrl = useCallback(() => {
     const params = new URLSearchParams({
