@@ -1,19 +1,10 @@
 import React, { useMemo, useState, useCallback } from "react";
 
 /* ==========================================================
-   🔵 CLEAN STRING
-   ========================================================== */
-const clean = (str) =>
-  str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ /g, "+")
-    .replace(/'/g, "");
-
-/* ==========================================================
    🔵 TABLE DÉPARTEMENTS (COMPLÈTE)
    ========================================================== */
 const DEPARTEMENT_CP = {
+
   Ain: ["01"],
   Aisne: ["02"],
   Allier: ["03"],
