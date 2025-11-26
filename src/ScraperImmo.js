@@ -107,7 +107,10 @@ const DEPARTEMENT_CP = {
    🔵 UI DES DÉPARTEMENTS (libellés jolis)
    ========================================================== */
 const DEPARTEMENTS_UI = Object.fromEntries(
-  Object.keys(DEPARTEMENT_CP).map((d) => [d, d.replace(/_/g, "-")])
+  Object.keys(DEPARTEMENT_CP).map((d) => [
+    d,
+    d.replace(/_/g, "-").replace(/-/g, " ")
+  ])
 );
 
 /* ==========================================================
@@ -119,55 +122,57 @@ export default function ScraperImmo() {
   /* ------------------ ÉTATS ------------------ */
   const [site, setSite] = useState("leboncoin");
   const [departement, setDepartement] = useState("Rhone");
+
+  const [typeBien, setTypeBien] = useState("maison");
+
   const [prixMin, setPrixMin] = useState(100000);
   const [prixMax, setPrixMax] = useState(400000);
+
   const [piecesMin, setPiecesMin] = useState(3);
   const [piecesMax, setPiecesMax] = useState(6);
+
   const [surfaceMin, setSurfaceMin] = useState(50);
+
   const [terrainMin, setTerrainMin] = useState("");
   const [terrainMax, setTerrainMax] = useState("");
+
   const [dpe, setDpe] = useState("indifferent");
 
   /* ==========================================================
-   🔵 Génération URL LEBONCOIN EXACTE & MINIMALISTE
-   ========================================================== */
+     🔵 Génération URL LEBONCOIN EXACTE & MINIMALISTE
+     ========================================================== */
   const buildLeboncoinUrl = useCallback(() => {
-    // Code département → format LBC : d_XX
     const cp = DEPARTEMENT_CP[departement]?.[0] || "";
     const dptLBC = `d_${cp}`;
 
-    // Type de bien → valeurs Leboncoin
     const typeMapLbc = {
       maison: "1",
       appartement: "2",
       terrain: "3",
     };
+
     const typeBienLBC = typeMapLbc[typeBien] || "1";
 
-    // Plages
     const roomsPart = `${piecesMin}-${piecesMax}`;
     const squarePart = `${surfaceMin}-`;
     const pricePart = `${prixMin}-${prixMax}`;
 
-    // URL minimale strictement compatible LBC
     let url =
       "https://www.leboncoin.fr/recherche?" +
-      "category=9" +
-      `&locations=${dptLBC}` +         // d_88, d_69, d_75, etc.
+      `category=9` +
+      `&locations=${dptLBC}` +
       `&price=${pricePart}` +
       `&rooms=${roomsPart}` +
       `&square=${squarePart}` +
       `&real_estate_type=${typeBienLBC}` +
       `&immo_sell_type=old`;
 
-    // Terrain
     if (terrainMin || terrainMax) {
       url += `&land_plot_surface=${terrainMin || ""}-${terrainMax || ""}`;
     }
 
-    // DPE
     if (dpe !== "indifferent") {
-      url += `&energy_rate=${dpe.toLowerCase()}`; // exemple : d, c, e, g
+      url += `&energy_rate=${dpe.toLowerCase()}`;
     }
 
     return url;
@@ -185,6 +190,9 @@ export default function ScraperImmo() {
   ]);
 
 
+  /* ==========================================================
+     🔵 PAP
+     ========================================================== */
   const buildPAPUrl = useCallback(() => {
     const params = new URLSearchParams({
       prixmin: prixMin || "",
@@ -193,9 +201,13 @@ export default function ScraperImmo() {
       surface: surfaceMin || "",
       villes: DEPARTEMENTS_UI[departement],
     });
+
     return `https://www.pap.fr/annonce?${params.toString()}`;
   }, [departement, prixMin, prixMax, piecesMin, surfaceMin]);
 
+  /* ==========================================================
+     🔵 LOGIC-IMMO
+     ========================================================== */
   const buildLogicImmoUrl = useCallback(() => {
     const params = new URLSearchParams({
       transaction: "vente",
@@ -206,18 +218,16 @@ export default function ScraperImmo() {
       surfacemin: surfaceMin,
       location: DEPARTEMENTS_UI[departement],
     });
+
     return `https://www.logic-immo.com/?${params.toString()}`;
   }, [departement, prixMin, prixMax, piecesMin, piecesMax, surfaceMin]);
+
 
   /* ==========================================================
      🔵 SELECT SITE
      ========================================================== */
   const previewUrl = useMemo(() => {
     switch (site) {
-      case "seloger":
-        return buildSelogerUrl();
-      case "bienici":
-        return buildBienIciUrl();
       case "pap":
         return buildPAPUrl();
       case "logic-immo":
@@ -228,11 +238,10 @@ export default function ScraperImmo() {
   }, [
     site,
     buildLeboncoinUrl,
-    buildSelogerUrl,
-    buildBienIciUrl,
     buildPAPUrl,
     buildLogicImmoUrl,
   ]);
+
 
   const handleOpenSearch = () => {
     const w = window.open(previewUrl, "_blank");
