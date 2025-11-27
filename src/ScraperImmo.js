@@ -1,134 +1,359 @@
 import React, { useMemo, useState, useCallback } from "react";
 
-// ======================================================
-// CLEAN STRING
-// ======================================================
-const clean = (str) =>
-  str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ /g, "+")
-    .replace(/'/g, "");
-
-
-// ======================================================
-// CP PAR DÉPARTEMENT (CLEFS INTERNES SAFE)
-// ======================================================
+/* ==========================================================
+   🔵 TABLE DÉPARTEMENTS (COMPLÈTE)
+   ========================================================== */
 const DEPARTEMENT_CP = {
-  Ain:["01"], Aisne:["02"], Allier:["03"],
-  Alpes_de_Haute_Provence:["04"], Hautes_Alpes:["05"], Alpes_Maritimes:["06"],
-  Ardeche:["07"], Ardennes:["08"], Ariege:["09"],
-  Aube:["10"], Aude:["11"], Aveyron:["12"],
-  Bas_Rhin:["67"], Haut_Rhin:["68"],
-  Bouches_du_Rhone:["13"],
-  Calvados:["14"], Cantal:["15"],
-  Charente:["16"], Charente_Maritime:["17"],
-  Cher:["18"], Correze:["19"],
-  Corse_du_Sud:["2A"], Haute_Corse:["2B"],
-  Cote_d_Or:["21"], Cotes_d_Armor:["22"],
-  Creuse:["23"], Deux_Sevres:["79"],
-  Dordogne:["24"], Doubs:["25"], Drome:["26"],
-  Eure:["27"], Eure_et_Loir:["28"],
-  Finistere:["29"],
-  Gard:["30"], Haute_Garonne:["31"], Gers:["32"], Gironde:["33"], Herault:["34"],
-  Ille_et_Vilaine:["35"], Indre:["36"], Indre_et_Loire:["37"], Isere:["38"], Jura:["39"],
-  Landes:["40"], Loir_et_Cher:["41"], Loire:["42"], Haute_Loire:["43"], Loire_Atlantique:["44"],
-  Loiret:["45"], Lot:["46"], Lot_et_Garonne:["47"], Lozere:["48"],
-  Maine_et_Loire:["49"], Manche:["50"], Marne:["51"], Haute_Marne:["52"], Mayenne:["53"],
-  Meurthe_et_Moselle:["54"], Meuse:["55"], Morbihan:["56"], Moselle:["57"], Nievre:["58"],
-  Nord:["59"], Oise:["60"], Orne:["61"], Pas_de_Calais:["62"], Puy_de_Dome:["63"],
-  Pyrenees_Atlantiques:["64"], Hautes_Pyrenees:["65"], Pyrenees_Orientales:["66"],
-  Rhone:["69"], Haute_Saone:["70"], Saone_et_Loire:["71"], Sarthe:["72"],
-  Savoie:["73"], Haute_Savoie:["74"],
-  Paris:["75"], Seine_Maritime:["76"], Seine_et_Marne:["77"], Yvelines:["78"],
-  Somme:["80"], Tarn:["81"], Tarn_et_Garonne:["82"],
-  Var:["83"], Vaucluse:["84"], Vendee:["85"], Vienne:["86"], Haute_Vienne:["87"],
-  Vosges:["88"], Yonne:["89"], Territoire_de_Belfort:["90"],
-  Essonne:["91"], Hauts_de_Seine:["92"], Seine_Saint_Denis:["93"], Val_de_Marne:["94"], Val_d_Oise:["95"]
+  Ain: ["01"], Aisne: ["02"], Allier: ["03"], Alpes_de_Haute_Provence: ["04"],
+  Hautes_Alpes: ["05"], Alpes_Maritimes: ["06"], Ardeche: ["07"],
+  Ardennes: ["08"], Ariege: ["09"], Aube: ["10"], Aude: ["11"], Aveyron: ["12"],
+  Bas_Rhin: ["67"], Haut_Rhin: ["68"], Bouches_du_Rhone: ["13"], Calvados: ["14"],
+  Cantal: ["15"], Charente: ["16"], Charente_Maritime: ["17"], Cher: ["18"],
+  Correze: ["19"], Corse_du_Sud: ["2A"], Haute_Corse: ["2B"], Cote_d_Or: ["21"],
+  Cotes_d_Armor: ["22"], Creuse: ["23"], Deux_Sevres: ["79"], Dordogne: ["24"],
+  Doubs: ["25"], Drome: ["26"], Eure: ["27"], Eure_et_Loir: ["28"],
+  Finistere: ["29"], Gard: ["30"], Haute_Garonne: ["31"], Gers: ["32"],
+  Gironde: ["33"], Herault: ["34"], Ille_et_Vilaine: ["35"], Indre: ["36"],
+  Indre_et_Loire: ["37"], Isere: ["38"], Jura: ["39"], Landes: ["40"],
+  Loir_et_Cher: ["41"], Loire: ["42"], Haute_Loire: ["43"],
+  Loire_Atlantique: ["44"], Loiret: ["45"], Lot: ["46"], Lot_et_Garonne: ["47"],
+  Lozere: ["48"], Maine_et_Loire: ["49"], Manche: ["50"], Marne: ["51"],
+  Haute_Marne: ["52"], Mayenne: ["53"], Meurthe_et_Moselle: ["54"],
+  Meuse: ["55"], Morbihan: ["56"], Moselle: ["57"], Nievre: ["58"], Nord: ["59"],
+  Oise: ["60"], Orne: ["61"], Pas_de_Calais: ["62"], Puy_de_Dome: ["63"],
+  Pyrenees_Atlantiques: ["64"], Hautes_Pyrenees: ["65"],
+  Pyrenees_Orientales: ["66"], Rhone: ["69"], Haute_Saone: ["70"],
+  Saone_et_Loire: ["71"], Sarthe: ["72"], Savoie: ["73"],
+  Haute_Savoie: ["74"], Paris: ["75"], Seine_Maritime: ["76"],
+  Seine_et_Marne: ["77"], Yvelines: ["78"], Somme: ["80"], Tarn: ["81"],
+  Tarn_et_Garonne: ["82"], Var: ["83"], Vaucluse: ["84"], Vendee: ["85"],
+  Vienne: ["86"], Haute_Vienne: ["87"], Vosges: ["88"], Yonne: ["89"],
+  Territoire_de_Belfort: ["90"], Essonne: ["91"], Hauts_de_Seine: ["92"],
+  Seine_Saint_Denis: ["93"], Val_de_Marne: ["94"], Val_d_Oise: ["95"],
 };
 
+/* ==========================================================
+   🔵 LIBELLÉS JOLIS
+   ========================================================== */
+const DEPARTEMENTS_UI = Object.fromEntries(
+  Object.keys(DEPARTEMENT_CP).map((d) => [
+    d,
+    d.replace(/_/g, " ").replace(/-/g, " "),
+  ])
+);
 
-// ======================================================
-// LIBELLÉS POUR UI
-// ======================================================
-const DEPARTEMENTS_UI = {};
-Object.keys(DEPARTEMENT_CP).forEach(k => {
-  DEPARTEMENTS_UI[k] =
-    k
-    .replace(/_/g," ")
-    .replace(/Rhone/,"Rhône")
-    .replace(/Herault/,"Hérault")
-    .replace(/Pyrenees/,"Pyrénées")
-    .replace(/Lozere/,"Lozère")
-    .replace(/Correze/,"Corrèze")
-});
-
-
-// ======================================================
-// composant
-// ======================================================
+/* ==========================================================
+   🔵 COMPOSANT PRINCIPAL
+   ========================================================== */
 export default function ScraperImmo() {
-
   const DEPARTEMENTS = Object.keys(DEPARTEMENT_CP);
 
-  // ------- États des filtres -------
-  const [departement, setDepartement] = useState("Rhone");
+  /* ------------------ ÉTATS ------------------ */
   const [site, setSite] = useState("leboncoin");
+  const [departement, setDepartement] = useState("Rhone");
+
+  const [typeBien, setTypeBien] = useState("maison"); // ✔ utilisé maintenant
+
   const [prixMin, setPrixMin] = useState(100000);
   const [prixMax, setPrixMax] = useState(400000);
+
   const [piecesMin, setPiecesMin] = useState(3);
-  const [piecesMax, setPiecesMax] = useState(5);
+  const [piecesMax, setPiecesMax] = useState(6);
+
   const [surfaceMin, setSurfaceMin] = useState(50);
-  const [terrain, setTerrain] = useState("indifferent");
-  const [chauffage, setChauffage] = useState("indifferent");
-  const [travaux, setTravaux] = useState("indifferent");
-  const [typeBien, setTypeBien] = useState("maison");
 
   const [terrainMin, setTerrainMin] = useState("");
   const [terrainMax, setTerrainMax] = useState("");
-  const [orientation, setOrientation] = useState("indifferent");
-  const [anneeMin, setAnneeMin] = useState("");
-  const [anneeMax, setAnneeMax] = useState("");
+
   const [dpe, setDpe] = useState("indifferent");
 
+  /* ==========================================================
+     🔵 Leboncoin — URL propre & exacte
+     ========================================================== */
+  const buildLeboncoinUrl = useCallback(() => {
+    const cp = DEPARTEMENT_CP[departement]?.[0] || "";
+    const dptLBC = `d_${cp}`;
 
-  const buildSiteUrl = useCallback(() => {
+    const typeMapLbc = {
+      maison: "1",
+      appartement: "2",
+      terrain: "3",
+    };
+    const typeBienLBC = typeMapLbc[typeBien] || "1";
 
-    const cp = DEPARTEMENT_CP[departement] ?? [];
-    const cpString = cp.join(",");
+    const pricePart = `${prixMin}-${prixMax}`;
+    const roomsPart = `${piecesMin}-${piecesMax}`;
+    const squarePart = `${surfaceMin}-`;
 
-    const dptClean = clean(departement);
+    let url =
+      "https://www.leboncoin.fr/recherche?" +
+      `category=9` +
+      `&locations=${dptLBC}` +
+      `&price=${pricePart}` +
+      `&rooms=${roomsPart}` +
+      `&square=${squarePart}` +
+      `&real_estate_type=${typeBienLBC}` +
+      `&immo_sell_type=old`;
 
-    // ici ton code URL LBC inchangé
-    // …
+    if (terrainMin || terrainMax) {
+      url += `&land_plot_surface=${terrainMin || ""}-${terrainMax || ""}`;
+    }
 
-    return "#";
+    if (dpe !== "indifferent") {
+      url += `&energy_rate=${dpe.toLowerCase()}`;
+    }
 
-  }, [departement, prixMin, prixMax, piecesMin, piecesMax, surfaceMin, terrain, chauffage, travaux, typeBien, terrainMin, terrainMax, orientation, anneeMin, anneeMax, dpe]);
+    return url;
+  }, [
+    departement,
+    prixMin,
+    prixMax,
+    piecesMin,
+    piecesMax,
+    surfaceMin,
+    terrainMin,
+    terrainMax,
+    dpe,
+    typeBien,
+  ]);
 
+
+  /* ==========================================================
+     🔵 PAP
+     ========================================================== */
+  const buildPAPUrl = useCallback(() => {
+    const params = new URLSearchParams({
+      prixmin: prixMin,
+      prixmax: prixMax,
+      nb_pieces: piecesMin,
+      surface: surfaceMin,
+      villes: DEPARTEMENTS_UI[departement],
+    });
+
+    return `https://www.pap.fr/annonce?${params.toString()}`;
+  }, [departement, prixMin, prixMax, piecesMin, surfaceMin]);
+
+  /* ==========================================================
+     🔵 Logic-Immo
+     ========================================================== */
+  const buildLogicImmoUrl = useCallback(() => {
+    const params = new URLSearchParams({
+      transaction: "vente",
+      prixmin: prixMin,
+      prixmax: prixMax,
+      piecesmin: piecesMin,
+      piecesmax: piecesMax,
+      surfacemin: surfaceMin,
+      location: DEPARTEMENTS_UI[departement],
+    });
+
+    return `https://www.logic-immo.com/?${params.toString()}`;
+  }, [departement, prixMin, prixMax, piecesMin, piecesMax, surfaceMin]);
+
+
+  /* ==========================================================
+     🔵 Sélecteur de site
+     ========================================================== */
+  const previewUrl = useMemo(() => {
+    switch (site) {
+      case "pap":
+        return buildPAPUrl();
+      case "logic-immo":
+        return buildLogicImmoUrl();
+      default:
+        return buildLeboncoinUrl();
+    }
+  }, [site, buildLeboncoinUrl, buildPAPUrl, buildLogicImmoUrl]);
 
   const handleOpenSearch = () => {
-    const url = buildSiteUrl();
-    window.open(url,"_blank","noopener,noreferrer");
+    const w = window.open(previewUrl, "_blank");
+    if (!w) alert("Pop-up bloquée, autorisez l’ouverture.");
   };
 
-
-  const previewUrl = useMemo(() => buildSiteUrl(), [buildSiteUrl]);
-
-
+  /* ==========================================================
+     🔵 INTERFACE
+     ========================================================== */
   return (
-    <div>
-      <select value={departement} onChange={(e)=>setDepartement(e.target.value)}>
-        {DEPARTEMENTS.map(d => (
-          <option key={d} value={d}>
-            {DEPARTEMENTS_UI[d] || d}
-          </option>
-        ))}
-      </select>
+    <div style={page}>
+      <h1 style={title}>🏡 Multi-Site Immo Finder</h1>
 
-      <button onClick={handleOpenSearch}>Ouvrir</button>
+      <div style={panel}>
+        {/* Ligne 1 */}
+        <div style={row}>
+          <div style={col}>
+            <label style={label}>Site</label>
+            <select value={site} onChange={(e) => setSite(e.target.value)} style={select}>
+              <option value="leboncoin">Leboncoin</option>
+              <option value="pap">PAP</option>
+              <option value="logic-immo">Logic-Immo</option>
+            </select>
+          </div>
 
-      <div>{previewUrl}</div>
+          <div style={col}>
+            <label style={label}>Type de bien</label>
+            <select value={typeBien} onChange={(e) => setTypeBien(e.target.value)} style={select}>
+              <option value="maison">Maison</option>
+              <option value="appartement">Appartement</option>
+              <option value="terrain">Terrain</option>
+            </select>
+          </div>
+
+          <div style={col}>
+            <label style={label}>Département</label>
+            <select value={departement} onChange={(e) => setDepartement(e.target.value)} style={select}>
+              {DEPARTEMENTS.map((d) => (
+                <option key={d} value={d}>
+                  {DEPARTEMENTS_UI[d]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={col}>
+            <label style={label}>DPE</label>
+            <select value={dpe} onChange={(e) => setDpe(e.target.value)} style={select}>
+              <option value="indifferent">Indifférent</option>
+              {["A","B","C","D","E","F","G"].map((x) => (
+                <option key={x} value={x}>{x}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={col}></div>
+        </div>
+
+        {/* Ligne 2 */}
+        <div style={row}>
+          <div style={col}>
+            <label style={label}>Prix min (€)</label>
+            <input type="number" value={prixMin} onChange={(e) => setPrixMin(Number(e.target.value))} style={input} />
+          </div>
+
+          <div style={col}>
+            <label style={label}>Prix max (€)</label>
+            <input type="number" value={prixMax} onChange={(e) => setPrixMax(Number(e.target.value))} style={input} />
+          </div>
+
+          <div style={col}>
+            <label style={label}>Pièces min</label>
+            <input type="number" value={piecesMin} onChange={(e) => setPiecesMin(Number(e.target.value))} style={input} />
+          </div>
+
+          <div style={col}>
+            <label style={label}>Pièces max</label>
+            <input type="number" value={piecesMax} onChange={(e) => setPiecesMax(Number(e.target.value))} style={input} />
+          </div>
+
+          <div style={col}></div>
+        </div>
+
+        {/* Ligne 3 */}
+        <div style={row}>
+          <div style={col}>
+            <label style={label}>Surface min (m²)</label>
+            <input type="number" value={surfaceMin} onChange={(e) => setSurfaceMin(Number(e.target.value))} style={input} />
+          </div>
+
+          <div style={col}>
+            <label style={label}>Terrain min (m²)</label>
+            <input type="number" value={terrainMin} onChange={(e) => setTerrainMin(e.target.value)} style={input} />
+          </div>
+
+          <div style={col}>
+            <label style={label}>Terrain max (m²)</label>
+            <input type="number" value={terrainMax} onChange={(e) => setTerrainMax(e.target.value)} style={input} />
+          </div>
+
+          <div style={col}></div>
+          <div style={col}></div>
+        </div>
+
+        {/* Bouton */}
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button onClick={handleOpenSearch} style={btnRun}>🔎 Ouvrir la recherche</button>
+        </div>
+
+        {/* Preview URL */}
+        <div style={{ marginTop: 20, fontSize: 13, opacity: 0.9 }}>
+          <div>Aperçu de l’URL :</div>
+          <code style={codeBox}>{previewUrl}</code>
+
+          <div style={{ marginTop: 10 }}>
+            <a href={previewUrl} target="_blank" rel="noreferrer" style={link}>🔗 Ouvrir dans un nouvel onglet</a>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+/* ==========================================================
+   🔵 Styles
+   ========================================================== */
+const page = {
+  backgroundColor: "#243b55",
+  color: "white",
+  minHeight: "100vh",
+  padding: 40,
+  fontFamily: "Segoe UI",
+};
+
+const title = { textAlign: "center", color: "#ffcc00", marginBottom: 14 };
+const panel = {
+  background: "#1e3150",
+  padding: 16,
+  borderRadius: 12,
+  boxShadow: "0 2px 10px rgba(0,0,0,.25)",
+  maxWidth: 1200,
+  margin: "0 auto",
+};
+
+const row = {
+  display: "grid",
+  gridTemplateColumns: "repeat(5, 1fr)",
+  gap: 12,
+  marginBottom: 10,
+};
+
+const col = { display: "flex", flexDirection: "column", gap: 6 };
+const label = { fontSize: 13, opacity: 0.9 };
+
+const select = {
+  padding: "10px 12px",
+  borderRadius: 8,
+  fontSize: 14,
+  background: "#4fa3f7",
+  color: "white",
+  border: "none",
+};
+
+const input = {
+  padding: "10px 12px",
+  borderRadius: 8,
+  fontSize: 14,
+  background: "#2d446a",
+  color: "white",
+  border: "1px solid #3b4f7f",
+};
+
+const btnRun = {
+  padding: "10px 18px",
+  borderRadius: 8,
+  backgroundColor: "#2d7d46",
+  color: "white",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: "bold",
+};
+
+const link = { color: "#4fa3f7", fontWeight: "bold", textDecoration: "none" };
+
+const codeBox = {
+  display: "block",
+  background: "#14233d",
+  border: "1px solid #29406a",
+  padding: "10px 12px",
+  borderRadius: 8,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+};
