@@ -78,62 +78,97 @@
                 }
 
                const prompt = `
-Tu es un expert immobilier et analyste du marché local.
+Tu es un expert immobilier senior (transaction, estimation, analyse de marché).
+Tu travailles comme un professionnel de l’immobilier (agence, notaire, investisseur).
 
-À partir de l'annonce brute ci-dessous, génère une synthèse professionnelle claire, structurée et orientée aide à la décision.
+OBJECTIF :
+Produire une SYNTHÈSE IMMOBILIÈRE COMPLÈTE, DÉTAILLÉE ET EXPLOITABLE
+à partir de l’annonce brute fournie.
 
-🎯 OBJECTIFS :
-- Mettre en valeur le bien
-- Identifier ses principaux avantages
-- Analyser le prix par rapport au marché local
-- Fournir un résumé commercial fluide et convaincant
+⚠️ RÈGLES IMPÉRATIVES :
+- Tu dois analyser TOUTES les informations présentes dans l’annonce
+- Tu n’inventes AUCUNE donnée
+- Si une information est absente → indiquer clairement "Non précisé"
+- Ne pas faire une synthèse courte ou vague
+- Ton professionnel, clair, structuré, crédible (pas marketing bidon)
 
-📋 STRUCTURE ATTENDUE :
+━━━━━━━━━━━━━━━━━━━━━━
+📌 STRUCTURE OBLIGATOIRE
+━━━━━━━━━━━━━━━━━━━━━━
 
-1️⃣ FICHE SYNTHÈSE
-- Type de bien
-- Surface habitable
-- Localisation
-- Prix affiché
-- Prix au m² (si possible)
-- Cohérence du prix par rapport au marché local (sous-évalué / cohérent / surévalué)
+1️⃣ FICHE TECHNIQUE DU BIEN  
+(extraire et lister exhaustivement les éléments trouvés dans l’annonce)
 
-2️⃣ POINTS FORTS DU BIEN
-- Atouts objectifs (surface, état, emplacement, potentiel, extérieur, luminosité, etc.)
-- Points différenciants par rapport au marché local
+- Type de bien  
+- Localisation  
+- Surface habitable  
+- Nombre de pièces  
+- Nombre de chambres  
+- Surface du terrain (si précisée)  
+- Étage / plain-pied  
+- Année de construction (si indiquée)  
+- État général  
+- Chauffage (type + énergie)  
+- DPE / GES (si présents)  
+- Isolation (si mentionnée)  
+- Stationnement  
+- Dépendances / annexes  
+- Équipements et prestations  
+- Autres informations notables  
 
-3️⃣ ANALYSE DU PRIX
-- Analyse du positionnement du prix par rapport au marché immobilier de la zone
-- Rapport qualité/prix
-- Profil d’acheteur idéal (famille, investisseur, primo-accédant, etc.)
+2️⃣ DONNÉES FINANCIÈRES
 
-4️⃣ RÉSUMÉ COMMERCIAL
-- Résumé fluide, professionnel et rassurant
-- Ton expert, clair et vendeur (sans exagération)
+- Prix affiché  
+- Prix au m² (calculé si possible)  
+- Positionnement du prix :
+  (sous-évalué / cohérent / au-dessus du marché)
+- Justification basée sur les caractéristiques du bien
 
-⚠️ RÈGLES :
-- Style professionnel et immobilier
-- Langage clair et structuré
-- Ne pas inventer de données absentes
-- Si une info manque, l’indiquer clairement
+3️⃣ POINTS FORTS DU BIEN  
+(liste factuelle basée uniquement sur l’annonce)
 
-Annonce brute :
+4️⃣ POINTS DE VIGILANCE  
+(travaux, DPE faible, contraintes, éléments à anticiper)
+
+5️⃣ ANALYSE DE MARCHÉ
+
+- Analyse professionnelle du positionnement du bien  
+- Rapport qualité / prix  
+- Attractivité sur le marché local  
+
+6️⃣ PROFIL D’ACHETEUR IDÉAL
+
+- Typologie d’acheteur la plus pertinente  
+- Pourquoi ce bien correspond à ce profil  
+
+7️⃣ RÉSUMÉ COMMERCIAL FINAL
+
+- Texte fluide et professionnel  
+- Prêt à être utilisé dans une annonce d’agence  
+- Ton sérieux, rassurant et crédible  
+
+━━━━━━━━━━━━━━━━━━━━━━
+📄 ANNONCE BRUTE
+━━━━━━━━━━━━━━━━━━━━━━
+
 ${texte}
 `;
 
 
-                const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${API_KEY}`
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.6
-    })
-  });
+
+               const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${API_KEY}`
+  },
+  body: JSON.stringify({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.35
+  })
+});
+
 
   const data = await response.json();
 
